@@ -1,0 +1,39 @@
+# Core FastAPI dependencies - Compatible versions
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+starlette==0.27.0
+
+# Database
+sqlalchemy==2.0.23
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# File handling
+aiofiles==23.2.1
+Pillow==10.1.0
+
+# OCR support
+pytesseract==0.3.10
+
+# HTTP client
+httpx==0.25.2
+
+# Environment
+python-dotenv==1.0.0
+
+# Email validation
+email-validator==2.1.0
+
+# Browser automation - Production ready
+selenium==4.15.2
+webdriver-manager==4.0.1
+
+# Async support
+anyio==3.7.1
+
+# System
+setuptools
