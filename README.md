@@ -1,6 +1,36 @@
-# Unified Services Portal
+# Gujarat Unified Services Portal
 
-A single portal to manage all utility services - Electricity, Gas, Water & Property with auto-fill functionality.
+A complete unified portal with Website + Mobile App to manage all utility services, company formation, and government grants.
+
+---
+
+## ⚡ QUICK START (Choose One)
+
+### Option 1: Run Everything at Once (Easiest)
+```cmd
+start-all.bat
+```
+This starts Backend + Frontend + Mobile App in 3 windows!
+
+### Option 2: Run Individually
+- **Website**: Double-click `start-frontend.bat` → Open http://localhost:5173
+- **API**: Double-click `start-backend.bat` → Open http://localhost:8000
+- **Mobile**: Double-click `start-mobile.bat` → Scan QR with Expo Go
+
+### Option 3: Manual Commands
+```cmd
+# Frontend (Website)
+cd frontend
+npm run dev
+
+# Backend (API)
+cd backend
+python main.py
+
+# Mobile App
+cd mobile-app
+npm start
+```
 
 ---
 

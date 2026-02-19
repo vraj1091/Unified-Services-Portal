@@ -1,0 +1,15 @@
+{
+    "expo": {
+        "name": "gujarat-unified-services-portal-mobile",
+        "slug": "gujarat-unified-services-portal-mobile",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "userInterfaceStyle": "light",
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "ios": {
+            "supportsTablet": true
+        }
+    }
+}
