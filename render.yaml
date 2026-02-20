@@ -1,47 +1,26 @@
 services:
-  # Backend API Service
   - type: web
-    name: gujarat-portal-backend
+    name: gujarat-backend
     env: python
-    region: oregon
-    plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: gujarat-portal-db
-          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
         value: HS256
-      - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: 30
-      - key: ENVIRONMENT
-        value: production
       - key: CORS_ORIGINS
         value: "*"
 
-  # Frontend Web Service
   - type: web
-    name: gujarat-portal-frontend
+    name: gujarat-frontend
     env: node
-    region: oregon
-    plan: free
     rootDir: frontend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm run preview -- --host 0.0.0.0 --port $PORT
     envVars:
       - key: VITE_API_URL
-        value: https://gujarat-portal-backend.onrender.com
+        value: https://gujarat-backend.onrender.com
       - key: NODE_ENV
         value: production
-
-databases:
-  - name: gujarat-portal-db
-    databaseName: gujarat_portal
-    user: gujarat_user
-    plan: free
-    region: oregon
