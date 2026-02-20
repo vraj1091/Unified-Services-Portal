@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import auth, users, services, applications, services_api, whatsapp, documents, services_data, portal_redirect, proxy, grants, admin
+from app.routers import auth, users, services, applications, services_api, whatsapp, documents, services_data, portal_redirect, proxy, grants, admin, automation
 from app.config import get_settings
 
 settings = get_settings()
@@ -32,6 +32,7 @@ app.include_router(services_api.router)
 app.include_router(services_data.router)
 app.include_router(portal_redirect.router)
 app.include_router(applications.router)
+app.include_router(automation.router)  # Automation routes
 app.include_router(documents.router)
 app.include_router(whatsapp.router)
 app.include_router(proxy.router)

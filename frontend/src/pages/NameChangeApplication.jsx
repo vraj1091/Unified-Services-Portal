@@ -398,16 +398,37 @@ const NameChangeApplication = () => {
                     <button
                       onClick={async () => {
                         setLoading(true);
-                        // Simulate automation process
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        setAutomationCompleted(true);
-                        setAutomationResult({
-                          success: true,
-                          applicationNumber: 'TP' + Date.now().toString().slice(-8),
-                          message: 'Your application has been successfully submitted to Torrent Power portal.',
-                          estimatedTime: '5-10 business days'
-                        });
-                        setLoading(false);
+                        try {
+                          // Call backend automation API
+                          const response = await axios.post('/api/automation/torrent-power/name-change', {
+                            city: formData.city,
+                            serviceNumber: formData.serviceNumber,
+                            tNumber: formData.tNumber,
+                            mobile: formData.mobile,
+                            email: formData.email,
+                            confirmEmail: formData.confirmEmail
+                          });
+
+                          if (response.data.success) {
+                            setAutomationCompleted(true);
+                            setAutomationResult({
+                              success: true,
+                              applicationNumber: response.data.application_number,
+                              message: response.data.message,
+                              estimatedTime: response.data.estimated_processing_time || '5-10 business days',
+                              trackingUrl: response.data.tracking_url
+                            });
+                          } else {
+                            alert('Automation failed: ' + response.data.message);
+                            setShowAutomation(false);
+                          }
+                        } catch (error) {
+                          console.error('Automation error:', error);
+                          alert('Error during automation: ' + (error.response?.data?.detail || error.message));
+                          setShowAutomation(false);
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                       disabled={loading}
                       className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
