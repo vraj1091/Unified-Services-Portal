@@ -1,10 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import ResponsiveLayout from './components/ResponsiveLayout';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import NewHome from './pages/NewHome';
 import UtilityServices from './pages/UtilityServices';
 import DocumentUploadFlow from './pages/DocumentUploadFlow';
 import FinalFormPage from './pages/FinalFormPage';
@@ -112,48 +111,46 @@ function App() {
           <Route path="/admin/grants" element={<AdminRoute><GrantsManagement /></AdminRoute>} />
           <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
           
-          {/* New Document-First Flow Routes */}
-          <Route path="/new-home" element={<NewHome />} />
-          
-          {/* Utility Services Routes */}
-          <Route path="/utility-services" element={<UtilityServices />} />
-          <Route path="/utility-services/:serviceType/:providerId/document-upload" element={<DocumentUploadFlow />} />
-          <Route path="/utility-services/:serviceType/:providerId/final-form" element={<FinalFormPage />} />
-          
-          {/* Company Formation Routes */}
-          <Route path="/company-formation" element={<CompanyFormation />} />
-          <Route path="/company-formation/:serviceId/document-upload" element={<DocumentUploadFlow />} />
-          <Route path="/company-formation/:serviceId/final-form" element={<FinalFormPage />} />
-          
-          {/* Government Grants Routes */}
-          <Route path="/government-grants" element={<GovernmentGrants />} />
-          <Route path="/government-grants/all" element={<AllGrants />} />
-          <Route path="/government-grants/:category" element={<AllGrants />} />
-          <Route path="/government-grants/grant/:grantId" element={<GrantDetail />} />
-          <Route path="/government-grants/find-grant" element={<DocumentUploadFlow />} />
-          
-          <Route path="/" element={<NewHome />} />
-          
-          <Route path="/dashboard" element={
+          {/* Protected Routes with Layout (Sidebar + Header) */}
+          <Route path="/" element={
             <ProtectedRoute>
-              <ResponsiveLayout />
+              <Layout />
             </ProtectedRoute>
           }>
             <Route index element={<Dashboard />} />
             <Route path="profile" element={<Profile />} />
             <Route path="documents" element={<Documents />} />
             <Route path="services" element={<Services />} />
-            <Route path="service-facilities/:serviceType" element={<ServiceFacilities />} />
-            <Route path="service-providers/:serviceType/:facilityType" element={<ServiceProviders />} />
-            <Route path="name-change-application/:serviceType" element={<NameChangeApplication />} />
             <Route path="applications" element={<Applications />} />
+            <Route path="support" element={<Support />} />
+            
+            {/* Utility Services */}
+            <Route path="utility-services" element={<UtilityServices />} />
+            <Route path="utility-services/:serviceType/:providerId/document-upload" element={<DocumentUploadFlow />} />
+            <Route path="utility-services/:serviceType/:providerId/final-form" element={<FinalFormPage />} />
             <Route path="electricity" element={<NameChangeForm />} />
             <Route path="gas" element={<NameChangeForm />} />
             <Route path="water" element={<NameChangeForm />} />
             <Route path="property" element={<NameChangeForm />} />
             <Route path="new-connection" element={<NewConnectionForm />} />
+            
+            {/* Company Formation */}
+            <Route path="company-formation" element={<CompanyFormation />} />
+            <Route path="company-formation/:serviceId/document-upload" element={<DocumentUploadFlow />} />
+            <Route path="company-formation/:serviceId/final-form" element={<FinalFormPage />} />
+            
+            {/* Government Grants */}
+            <Route path="government-grants" element={<GovernmentGrants />} />
+            <Route path="government-grants/all" element={<AllGrants />} />
+            <Route path="government-grants/:category" element={<AllGrants />} />
+            <Route path="government-grants/grant/:grantId" element={<GrantDetail />} />
+            <Route path="government-grants/find-grant" element={<DocumentUploadFlow />} />
+            
+            {/* Other Services */}
+            <Route path="service-facilities/:serviceType" element={<ServiceFacilities />} />
+            <Route path="service-providers/:serviceType/:facilityType" element={<ServiceProviders />} />
+            <Route path="name-change-application/:serviceType" element={<NameChangeApplication />} />
             <Route path="supplier-verification" element={<SupplierVerification />} />
-            <Route path="support" element={<Support />} />
           </Route>
         </Routes>
       </BrowserRouter>

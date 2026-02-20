@@ -3,7 +3,6 @@ services:
   - type: web
     name: gujarat-portal-backend
     env: python
-    runtime: python-3.11.0
     region: oregon
     plan: free
     branch: main
@@ -31,7 +30,6 @@ services:
   - type: web
     name: gujarat-portal-frontend
     env: node
-    runtime: node-20
     region: oregon
     plan: free
     branch: main
@@ -51,7 +49,6 @@ services:
   - type: web
     name: gujarat-portal-mobile
     env: static
-    region: oregon
     plan: free
     branch: main
     buildCommand: cd mobile-app && npm install && npx expo export:web

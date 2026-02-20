@@ -1,12 +1,14 @@
 @echo off
 echo ========================================
-echo  DEPLOYING ALL FIXES TO RENDER
+echo  DEPLOYING BLUEPRINT FIX TO RENDER
 echo ========================================
 echo.
-echo Fixed Issues:
-echo  [1] Frontend: vite not found
-echo  [2] Backend: pydantic Rust compilation
-echo  [3] Mobile: Not configured for deployment
+echo Fixed Blueprint Errors:
+echo  [1] Removed invalid runtime python-3.11.0
+echo  [2] Removed invalid runtime node-20
+echo  [3] Removed region from static site
+echo.
+echo All validation errors resolved!
 echo.
 echo ========================================
 echo.
@@ -18,7 +20,7 @@ git add .
 
 echo.
 echo [Step 2/3] Committing fixes...
-git commit -m "Fix: Resolve all Render deployment issues (frontend, backend, mobile)"
+git commit -m "Fix: Resolve blueprint validation errors - remove invalid runtime and region"
 
 echo.
 echo [Step 3/3] Pushing to GitHub...
