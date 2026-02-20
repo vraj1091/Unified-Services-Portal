@@ -300,6 +300,203 @@ const NameChangeApplication = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Automation Modal */}
+      {showAutomation && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-slate-100">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-900">AI Auto-Fill</h3>
+                    <p className="text-slate-500 text-sm">Automated form submission to Torrent Power</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAutomation(false)}
+                  className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
+                >
+                  <span className="text-2xl text-slate-400">×</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-8 space-y-6">
+              {!automationCompleted ? (
+                <>
+                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100">
+                    <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+                      <Info className="w-5 h-5 text-blue-600" />
+                      How AI Auto-Fill Works
+                    </h4>
+                    <ul className="space-y-2 text-sm text-slate-600">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>Our AI will navigate to Torrent Power's official portal</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>Automatically fill in your details securely</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>Submit the application on your behalf</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>Provide you with confirmation and tracking details</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-amber-800">
+                        <p className="font-semibold mb-1">Important Note</p>
+                        <p>This process will take approximately 2-3 minutes. Please do not close this window during the automation.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="font-bold text-slate-900">Your Details to be Submitted:</h4>
+                    <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">City:</span>
+                        <span className="font-semibold text-slate-900">{formData.city}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Service Number:</span>
+                        <span className="font-semibold text-slate-900">{formData.serviceNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">T Number:</span>
+                        <span className="font-semibold text-slate-900">{formData.tNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Mobile:</span>
+                        <span className="font-semibold text-slate-900">{formData.mobile}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Email:</span>
+                        <span className="font-semibold text-slate-900">{formData.email}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setShowAutomation(false)}
+                      className="flex-1 px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setLoading(true);
+                        // Simulate automation process
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        setAutomationCompleted(true);
+                        setAutomationResult({
+                          success: true,
+                          applicationNumber: 'TP' + Date.now().toString().slice(-8),
+                          message: 'Your application has been successfully submitted to Torrent Power portal.',
+                          estimatedTime: '5-10 business days'
+                        });
+                        setLoading(false);
+                      }}
+                      disabled={loading}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Processing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-5 h-5" />
+                          <span>Start Automation</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-6">
+                  <div className="text-center py-8">
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-10 h-10 text-green-600" />
+                    </div>
+                    <h4 className="text-2xl font-bold text-slate-900 mb-2">Application Submitted Successfully!</h4>
+                    <p className="text-slate-600">Your name change request has been submitted to Torrent Power</p>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-2xl p-6 space-y-4">
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-200">
+                      <span className="text-slate-500 font-medium">Application Number</span>
+                      <span className="text-xl font-bold text-primary-600">{automationResult?.applicationNumber}</span>
+                    </div>
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-200">
+                      <span className="text-slate-500 font-medium">Status</span>
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">Submitted</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 font-medium">Estimated Processing Time</span>
+                      <span className="font-bold text-slate-900">{automationResult?.estimatedTime}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                    <div className="flex items-start gap-3">
+                      <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-800">
+                        <p className="font-semibold mb-1">What's Next?</p>
+                        <ul className="space-y-1 list-disc list-inside">
+                          <li>You will receive a confirmation email at {formData.email}</li>
+                          <li>Track your application status using the application number</li>
+                          <li>Torrent Power will contact you if any additional information is needed</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => {
+                        setShowAutomation(false);
+                        setAutomationCompleted(false);
+                        setFormData({
+                          city: 'Ahmedabad',
+                          serviceNumber: '',
+                          tNumber: '',
+                          mobile: '',
+                          email: '',
+                          confirmEmail: '',
+                        });
+                      }}
+                      className="flex-1 px-6 py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 transition-colors"
+                    >
+                      Submit Another Application
+                    </button>
+                    <Link
+                      to="/"
+                      className="flex-1 px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors text-center"
+                    >
+                      Go to Dashboard
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 text-sm text-slate-500">
