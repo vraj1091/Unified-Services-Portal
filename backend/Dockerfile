@@ -70,5 +70,17 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
+# Create startup script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Starting Unified Portal Backend..."\n\
+echo "Seeding database with initial data..."\n\
+python seed_all_data.py || echo "Database already seeded"\n\
+echo "Starting application..."\n\
+pkill Xvfb 2>/dev/null || true\n\
+Xvfb :99 -screen 0 1920x1080x24 &\n\
+uvicorn app.main:app --host 0.0.0.0 --port 8000\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
 # Start virtual display and run the application
-CMD ["sh", "-c", "pkill Xvfb 2>/dev/null || true && Xvfb :99 -screen 0 1920x1080x24 & uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["/app/start.sh"]
