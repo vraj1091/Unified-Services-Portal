@@ -1,0 +1,189 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║              PUSH CODE TO GITHUB - STEP BY STEP INSTRUCTIONS              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+CURRENT STATUS:
+✓ All code changes are committed locally on 'bapu' branch
+✓ Ready to push to: https://github.com/vraj1091/Unified-Services-Portal.git
+✗ Permission denied when pushing (authentication issue)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SOLUTION: Use GitHub Personal Access Token (Easiest)
+
+STEP 1: Generate Personal Access Token on GitHub
+────────────────────────────────────────────────
+
+1. Go to: https://github.com/settings/tokens
+2. Click "Generate new token" → "Generate new token (classic)"
+3. Fill in:
+   - Token name: "Unified Portal Deployment"
+   - Expiration: 90 days (or your preference)
+4. Select scopes:
+   ☑ repo (Full control of private repositories)
+   ☑ workflow (Update GitHub Action workflows)
+5. Click "Generate token"
+6. COPY THE TOKEN (you won't see it again!)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2: Update Git Remote with Token
+────────────────────────────────────
+
+Run this command in PowerShell:
+
+  git -C Unified-Services-Portal remote set-url origin `
+    https://vraj1091:YOUR_TOKEN_HERE@github.com/vraj1091/Unified-Services-Portal.git
+
+Replace "YOUR_TOKEN_HERE" with the token you copied in Step 1
+
+Example:
+  git -C Unified-Services-Portal remote set-url origin `
+    https://vraj1091:ghp_1234567890abcdefghijklmnopqrstuvwxyz@github.com/vraj1091/Unified-Services-Portal.git
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3: Push to bapu Branch
+──────────────────────────
+
+Run this command:
+
+  git -C Unified-Services-Portal push origin bapu
+
+Expected output:
+  Enumerating objects: 10, done.
+  Counting objects: 100% (10/10), done.
+  Delta compression using up to 8 threads
+  Compressing objects: 100% (8/8), done.
+  Writing objects: 100% (10/10), 1.02 MiB | 512.00 KiB/s, done.
+  Total 10 (delta 5), reused 0 (delta 0), reused pack 0
+  remote: Resolving deltas: 100% (5/5), done.
+  To https://github.com/vraj1091/Unified-Services-Portal.git
+     b6fadd1..80d5348  bapu -> bapu
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 4: Verify on GitHub
+────────────────────────
+
+1. Go to: https://github.com/vraj1091/Unified-Services-Portal
+2. Click on "bapu" branch dropdown
+3. Verify you see the latest commit: "changes"
+4. Check that these files are present:
+   ✓ DATA_DEPLOYMENT_GUIDE.md
+   ✓ DEPLOYMENT_SUMMARY.md
+   ✓ QUICK_DEPLOYMENT_REFERENCE.txt
+   ✓ deploy-with-data.sh
+   ✓ deploy-with-data.bat
+   ✓ backend/Dockerfile (updated)
+   ✓ backend/app/models_grants.py (updated)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT'S BEING PUSHED
+
+New Files (5):
+  • DATA_DEPLOYMENT_GUIDE.md (334 lines)
+  • DEPLOYMENT_SUMMARY.md (318 lines)
+  • QUICK_DEPLOYMENT_REFERENCE.txt (143 lines)
+  • deploy-with-data.sh (98 lines)
+  • deploy-with-data.bat (105 lines)
+
+Modified Files (5):
+  • backend/Dockerfile (+14 lines, -0 lines)
+  • backend/app/models_grants.py (+10 lines, -0 lines)
+  • backend/app/seed_data/seed_database.py (+5 lines, -0 lines)
+  • frontend/src/App.jsx (+4 lines, -4 lines)
+  • frontend/package-lock.json (-13 lines)
+
+Total: 1022 insertions, 22 deletions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TROUBLESHOOTING
+
+Problem: "fatal: unable to access ... 403"
+Solution: 
+  1. Verify token is correct (no typos)
+  2. Check token hasn't expired
+  3. Verify token has 'repo' scope
+  4. Generate new token if needed
+
+Problem: "fatal: unable to access ... 401"
+Solution:
+  1. Token might be expired
+  2. Generate new token from https://github.com/settings/tokens
+  3. Update remote URL with new token
+
+Problem: "Permission denied (publickey)"
+Solution:
+  1. SSH keys not configured
+  2. Use HTTPS method with token instead
+  3. Or set up SSH keys (see SSH_SETUP.txt)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ALTERNATIVE: Use Git Credential Manager (Windows)
+
+If you have Git Credential Manager installed:
+
+1. Run:
+   git -C Unified-Services-Portal remote set-url origin `
+     https://github.com/vraj1091/Unified-Services-Portal.git
+
+2. Push:
+   git -C Unified-Services-Portal push origin bapu
+
+3. When prompted, enter your GitHub credentials
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFY BEFORE PUSHING
+
+Check current status:
+  git -C Unified-Services-Portal status
+
+Check commits to push:
+  git -C Unified-Services-Portal log origin/bapu..bapu
+
+Check what will be pushed:
+  git -C Unified-Services-Portal diff --stat origin/bapu bapu
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AFTER SUCCESSFUL PUSH
+
+1. Verify on GitHub:
+   https://github.com/vraj1091/Unified-Services-Portal/tree/bapu
+
+2. Optional: Create Pull Request to merge bapu → main
+   https://github.com/vraj1091/Unified-Services-Portal/compare/main...bapu
+
+3. Deploy from GitHub:
+   • Clone the updated code
+   • Run deployment scripts
+   • Test the application
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK COPY-PASTE COMMANDS
+
+1. Generate token: https://github.com/settings/tokens
+
+2. Update remote (replace YOUR_TOKEN):
+   git -C Unified-Services-Portal remote set-url origin `
+     https://vraj1091:YOUR_TOKEN@github.com/vraj1091/Unified-Services-Portal.git
+
+3. Push:
+   git -C Unified-Services-Portal push origin bapu
+
+4. Verify:
+   https://github.com/vraj1091/Unified-Services-Portal/tree/bapu
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Need help? Check:
+  • GitHub Docs: https://docs.github.com/en/authentication
+  • Token Settings: https://github.com/settings/tokens
+  • Repository: https://github.com/vraj1091/Unified-Services-Portal
+
