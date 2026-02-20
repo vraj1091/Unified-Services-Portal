@@ -3,10 +3,11 @@ services:
   - type: web
     name: gujarat-portal-backend
     env: python
+    runtime: python-3.11.0
     region: oregon
     plan: free
     branch: main
-    buildCommand: cd backend && pip install --upgrade pip && pip install -r requirements.txt
+    buildCommand: cd backend && pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
     envVars:
@@ -30,6 +31,7 @@ services:
   - type: web
     name: gujarat-portal-frontend
     env: node
+    runtime: node-20
     region: oregon
     plan: free
     branch: main
@@ -43,6 +45,27 @@ services:
           envVarKey: RENDER_EXTERNAL_URL
       - key: NODE_ENV
         value: production
+    autoDeploy: true
+
+  # Mobile App (Static Site)
+  - type: web
+    name: gujarat-portal-mobile
+    env: static
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: cd mobile-app && npm install && npx expo export:web
+    staticPublishPath: mobile-app/web-build
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: gujarat-portal-backend
+          envVarKey: RENDER_EXTERNAL_URL
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     autoDeploy: true
 
 databases:
