@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { Upload, FileText, Check, X, ArrowLeft, Home } from 'lucide-react';
+import { Upload, FileText, Check, X, ArrowLeft, Home, Trash2, Edit, Download } from 'lucide-react';
 
 const Documents = () => {
   const navigate = useNavigate();
@@ -45,10 +45,50 @@ const Documents = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       fetchDocuments();
+      alert('✓ Document uploaded successfully!');
     } catch (error) {
       console.error('Upload failed');
+      alert('✗ Upload failed. Please try again.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async (docId, fileName) => {
+    if (!window.confirm(`Are you sure you want to delete "${fileName}"?`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/users/documents/${docId}`);
+      fetchDocuments();
+      alert('✓ Document deleted successfully!');
+    } catch (error) {
+      console.error('Delete failed');
+      alert('✗ Delete failed. Please try again.');
+    }
+  };
+
+  const handleDownload = async (docId, fileName) => {
+    try {
+      const response = await api.get(`/users/documents/${docId}/download`, {
+        responseType: 'blob'
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      alert('✓ Document downloaded successfully!');
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('✗ Download failed. Please try again or re-upload the document.');
     }
   };
 
@@ -118,7 +158,7 @@ const Documents = () => {
         ) : (
           <div className="space-y-3">
             {documents.map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div className="flex items-center gap-3">
                   <FileText className="w-8 h-8 text-blue-600" />
                   <div>
@@ -128,16 +168,34 @@ const Documents = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {doc.is_verified ? (
-                    <span className="flex items-center gap-1 text-green-600 text-sm">
+                    <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
                       <Check className="w-4 h-4" /> Verified
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-blue-600 text-sm">
+                    <span className="flex items-center gap-1 text-blue-600 text-sm font-medium">
                       <Check className="w-4 h-4" /> Uploaded
                     </span>
                   )}
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 ml-4">
+                    <button
+                      onClick={() => handleDownload(doc.id, doc.file_name)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Download"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(doc.id, doc.file_name)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

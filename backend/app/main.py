@@ -47,8 +47,9 @@ def root():
     }
 
 @app.get("/health")
+@app.get("/api/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "service": "Gujarat Portal Backend"}
 
 
 if __name__ == "__main__":

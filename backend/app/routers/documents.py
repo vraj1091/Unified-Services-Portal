@@ -125,6 +125,32 @@ async def get_autofill_data(
     # Return extracted data from most recent document
     return {"data": documents[0].extracted_data or {}}
 
+@router.get("/{document_id}/download")
+async def download_document(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Download document file"""
+    from fastapi.responses import FileResponse
+    
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.user_id == current_user.id
+    ).first()
+    
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    if not os.path.exists(document.filepath):
+        raise HTTPException(status_code=404, detail="File not found on server")
+    
+    return FileResponse(
+        path=document.filepath,
+        filename=document.filename,
+        media_type='application/octet-stream'
+    )
+
 @router.delete("/{document_id}")
 async def delete_document(
     document_id: int,

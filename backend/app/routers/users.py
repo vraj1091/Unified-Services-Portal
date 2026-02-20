@@ -29,16 +29,24 @@ async def upload_document(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    import os
+    import shutil
+    
+    # Create uploads directory if it doesn't exist
+    upload_dir = "uploads/documents"
+    os.makedirs(upload_dir, exist_ok=True)
+    
     # Generate unique filename
     file_extension = file.filename.split(".")[-1]
-    unique_filename = f"{current_user.id}/{doc_type.value}/{uuid.uuid4()}.{file_extension}"
+    unique_filename = f"{current_user.id}_{doc_type.value}_{uuid.uuid4()}.{file_extension}"
+    file_path = os.path.join(upload_dir, unique_filename)
     
-    # In production, upload to S3
-    # For now, save locally
-    file_url = f"/uploads/{unique_filename}"
+    # Save file to disk
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
     
-    # Read file content
-    content = await file.read()
+    # Store relative path in database
+    file_url = f"/uploads/documents/{unique_filename}"
     
     # For now, no OCR processing - just store the document
     extracted_data = {}
@@ -88,6 +96,71 @@ def get_documents(
     current_user: User = Depends(get_current_user)
 ):
     return db.query(Document).filter(Document.user_id == current_user.id).all()
+
+@router.get("/documents/{document_id}/download")
+async def download_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Download document file"""
+    from fastapi.responses import FileResponse
+    import os
+    
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.user_id == current_user.id
+    ).first()
+    
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Extract filename from file_url
+    # file_url format: /uploads/documents/filename.ext
+    file_path = document.file_url.lstrip('/')
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=404, 
+            detail="File not found on server. It may have been deleted or moved."
+        )
+    
+    return FileResponse(
+        path=file_path,
+        filename=document.file_name,
+        media_type='application/octet-stream'
+    )
+
+@router.delete("/documents/{document_id}")
+def delete_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete document"""
+    import os
+    
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.user_id == current_user.id
+    ).first()
+    
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Delete file from disk if it exists
+    file_path = document.file_url.lstrip('/')
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            print(f"Failed to delete file: {e}")
+    
+    # Delete from database
+    db.delete(document)
+    db.commit()
+    
+    return {"success": True, "message": "Document deleted successfully"}
 
 @router.get("/autofill-data", response_model=AutoFillData)
 def get_autofill_data(
