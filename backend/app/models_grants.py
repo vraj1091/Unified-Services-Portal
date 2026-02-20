@@ -86,7 +86,7 @@ class Grant(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    applications = relationship("GrantApplication", back_populates="grant")
+    applications = relationship("GrantApplication", back_populates="grant", foreign_keys="GrantApplication.grant_id")
 
 class GrantApplicationStatus(str, enum.Enum):
     DRAFT = "draft"
@@ -139,9 +139,8 @@ class GrantApplication(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relationships
-    grant = relationship("Grant", back_populates="applications")
-    user = relationship("User", foreign_keys=[user_id])
+    # Relationships - lazy loading to avoid circular imports
+    grant = relationship("Grant", back_populates="applications", foreign_keys=[grant_id])
 
 class GrantFavorite(Base):
     """User's saved/favorited grants"""
@@ -151,6 +150,3 @@ class GrantFavorite(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     grant_id = Column(Integer, ForeignKey("grants.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    user = relationship("User", foreign_keys=[user_id])
-    grant = relationship("Grant", foreign_keys=[grant_id])

@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy.orm import Session
 from app.database import engine, SessionLocal
 from app.models import Base
+from app.seed_data.seed_grants import seed_grants
 
 def seed_database():
     """Seed the database with initial services data"""
@@ -20,6 +21,10 @@ def seed_database():
     print("Creating database tables...")
     Base.metadata.create_all(bind=engine)
     print("✓ Tables created successfully")
+    
+    # Seed government grants
+    print("\nSeeding government grants...")
+    seed_grants()
     
     # Note: Services are loaded from services_data.json via service_loader.py
     # This function just ensures tables exist

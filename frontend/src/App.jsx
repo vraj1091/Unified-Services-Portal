@@ -132,7 +132,9 @@ function App() {
           <Route path="/government-grants/grant/:grantId" element={<GrantDetail />} />
           <Route path="/government-grants/find-grant" element={<DocumentUploadFlow />} />
           
-          <Route path="/" element={
+          <Route path="/" element={<NewHome />} />
+          
+          <Route path="/dashboard" element={
             <ProtectedRoute>
               <ResponsiveLayout />
             </ProtectedRoute>

@@ -1,193 +1,181 @@
-# Push Code to GitHub Repository
+# Push Code to GitHub - bapu Branch
 
-## Repository URL
-https://github.com/vraj1091/Unified-Services-Portal
+## Issue Encountered
+Permission denied when pushing to GitHub via HTTPS.
 
-## Step-by-Step Instructions
+## Solution Options
 
-### 1. Open Command Prompt or PowerShell
-Navigate to your project directory:
+### Option 1: Use Personal Access Token (Recommended for HTTPS)
+
+1. **Generate GitHub Personal Access Token**
+   - Go to: https://github.com/settings/tokens
+   - Click "Generate new token" → "Generate new token (classic)"
+   - Select scopes: `repo` (full control of private repositories)
+   - Copy the token
+
+2. **Update Git Remote with Token**
+   ```bash
+   git -C Unified-Services-Portal remote set-url origin https://YOUR_USERNAME:YOUR_TOKEN@github.com/vraj1091/Unified-Services-Portal.git
+   ```
+   Replace:
+   - `YOUR_USERNAME` with your GitHub username (vraj1091)
+   - `YOUR_TOKEN` with the token you generated
+
+3. **Push to bapu branch**
+   ```bash
+   git -C Unified-Services-Portal push origin bapu
+   ```
+
+### Option 2: Use SSH (More Secure)
+
+1. **Generate SSH Key** (if you don't have one)
+   ```bash
+   ssh-keygen -t ed25519 -C "your-email@example.com"
+   ```
+
+2. **Add SSH Key to GitHub**
+   - Copy your public key: `cat ~/.ssh/id_ed25519.pub`
+   - Go to: https://github.com/settings/keys
+   - Click "New SSH key" and paste
+
+3. **Update Git Remote to SSH**
+   ```bash
+   git -C Unified-Services-Portal remote set-url origin git@github.com:vraj1091/Unified-Services-Portal.git
+   ```
+
+4. **Push to bapu branch**
+   ```bash
+   git -C Unified-Services-Portal push origin bapu
+   ```
+
+### Option 3: Use Git Credential Manager (Windows)
+
+1. **Install Git Credential Manager**
+   - Download from: https://github.com/git-ecosystem/git-credential-manager/releases
+   - Install it
+
+2. **Configure Git**
+   ```bash
+   git config --global credential.helper manager
+   ```
+
+3. **Push (will prompt for credentials)**
+   ```bash
+   git -C Unified-Services-Portal push origin bapu
+   ```
+
+---
+
+## What Will Be Pushed
+
+The following changes will be pushed to the `bapu` branch:
+
+### New Files:
+- ✅ `DATA_DEPLOYMENT_GUIDE.md` - Comprehensive deployment guide
+- ✅ `DEPLOYMENT_SUMMARY.md` - Quick deployment summary
+- ✅ `QUICK_DEPLOYMENT_REFERENCE.txt` - Quick reference card
+- ✅ `deploy-with-data.sh` - Linux/Mac deployment script
+- ✅ `deploy-with-data.bat` - Windows deployment script
+
+### Modified Files:
+- ✅ `backend/Dockerfile` - Updated with automatic data seeding
+- ✅ `backend/app/models_grants.py` - Fixed circular import issues
+- ✅ `backend/app/seed_data/seed_database.py` - Added seed_grants call
+- ✅ `frontend/src/App.jsx` - Minor routing updates
+
+### Total Changes:
+- **1022 insertions** (new code)
+- **22 deletions** (removed code)
+- **10 files changed**
+
+---
+
+## Verify Before Pushing
+
 ```bash
-cd C:\Users\vrajr\Downloads\gujarat-unified-services-portal-grants-and-improvements\gujarat-unified-services-portal-grants-and-improvements
+# Check current branch
+git -C Unified-Services-Portal branch
+
+# Check commits to push
+git -C Unified-Services-Portal log origin/bapu..bapu
+
+# Check what will be pushed
+git -C Unified-Services-Portal diff --stat origin/bapu bapu
 ```
 
-### 2. Check Current Git Status
-```bash
-git status
-```
+---
 
-### 3. Add Remote Repository (if not already added)
-```bash
-git remote add origin https://github.com/vraj1091/Unified-Services-Portal.git
-```
+## After Pushing
 
-Or if remote already exists, update it:
-```bash
-git remote set-url origin https://github.com/vraj1091/Unified-Services-Portal.git
-```
+1. **Verify on GitHub**
+   - Go to: https://github.com/vraj1091/Unified-Services-Portal
+   - Switch to `bapu` branch
+   - Verify all files are there
 
-### 4. Check Remote
-```bash
-git remote -v
-```
+2. **Create Pull Request (Optional)**
+   - If you want to merge to main, create a PR from `bapu` to `main`
 
-### 5. Add All Files
-```bash
-git add -A
-```
+3. **Deploy from GitHub**
+   - Clone the updated code
+   - Run deployment scripts
 
-Or add specific directories:
-```bash
-git add .
-```
-
-### 6. Commit Changes
-```bash
-git commit -m "Complete mobile app with document management system
-
-- Added professional 2-color design system
-- Implemented global document context for cross-app document management
-- Fixed document upload functionality with TouchableOpacity
-- Created document viewer with preview, download, share, delete features
-- Integrated utility services flow with document uploads
-- Added service providers screen with comprehensive provider database
-- Implemented company formation and government grants screens
-- Fixed all navigation and routing issues
-- Added proper error handling and user feedback
-- Created complete working mobile application"
-```
-
-### 7. Push to GitHub
-```bash
-git push -u origin main
-```
-
-Or if your branch is named 'master':
-```bash
-git push -u origin master
-```
-
-### 8. If Push is Rejected (force push - use with caution)
-```bash
-git push -u origin main --force
-```
-
-## Alternative: Using GitHub Desktop
-
-1. Open GitHub Desktop
-2. File → Add Local Repository
-3. Select: `C:\Users\vrajr\Downloads\gujarat-unified-services-portal-grants-and-improvements\gujarat-unified-services-portal-grants-and-improvements`
-4. Click "Commit to main" button
-5. Click "Push origin" button
-
-## Manual Commands (Copy and Paste)
-
-```bash
-# Navigate to project
-cd C:\Users\vrajr\Downloads\gujarat-unified-services-portal-grants-and-improvements\gujarat-unified-services-portal-grants-and-improvements
-
-# Configure git (if first time)
-git config user.name "vraj1091"
-git config user.email "your-email@example.com"
-
-# Add remote
-git remote add origin https://github.com/vraj1091/Unified-Services-Portal.git
-
-# Stage all changes
-git add -A
-
-# Commit
-git commit -m "Complete mobile app with document management system"
-
-# Push
-git push -u origin main
-```
-
-## If You Get Authentication Error
-
-### Option 1: Use Personal Access Token
-1. Go to GitHub.com → Settings → Developer settings → Personal access tokens
-2. Generate new token (classic)
-3. Select scopes: repo (all)
-4. Copy the token
-5. When prompted for password, paste the token
-
-### Option 2: Use GitHub CLI
-```bash
-# Install GitHub CLI first
-winget install GitHub.cli
-
-# Authenticate
-gh auth login
-
-# Push
-git push -u origin main
-```
-
-## Verify Upload
-
-After pushing, visit:
-https://github.com/vraj1091/Unified-Services-Portal
-
-You should see all your files uploaded!
-
-## Project Structure Being Uploaded
-
-```
-gujarat-unified-services-portal-grants-and-improvements/
-├── backend/                    # Backend API
-├── frontend/                   # Web frontend
-├── mobile-app/                 # React Native mobile app
-│   ├── src/
-│   │   ├── context/           # Global state management
-│   │   │   ├── AuthContext.js
-│   │   │   ├── ThemeContext.js
-│   │   │   └── DocumentContext.js  # NEW: Document management
-│   │   ├── screens/           # All app screens
-│   │   │   ├── auth/          # Login, Register
-│   │   │   ├── utility/       # Utility services flow
-│   │   │   ├── company/       # Company formation
-│   │   │   ├── grants/        # Government grants
-│   │   │   └── *.js           # Dashboard, Documents, etc.
-│   │   └── theme/             # Design system
-│   ├── App.js                 # Main app entry
-│   └── package.json
-├── terraform/                  # Infrastructure as code
-├── docker-compose.yml
-├── README.md
-└── Documentation files
-```
-
-## What's Included
-
-✅ Complete mobile application
-✅ Document management system
-✅ Professional UI/UX design
-✅ All service flows (Utility, Company, Grants)
-✅ Authentication system
-✅ Navigation setup
-✅ Context providers
-✅ All documentation files
+---
 
 ## Troubleshooting
 
-### Error: "fatal: not a git repository"
+### Still Getting Permission Denied?
+
+1. **Check if you have push access**
+   - You must be the owner or have write access to the repository
+
+2. **Verify credentials**
+   ```bash
+   git -C Unified-Services-Portal config --list | grep credential
+   ```
+
+3. **Clear cached credentials**
+   ```bash
+   git credential reject https://github.com
+   ```
+
+4. **Try with verbose output**
+   ```bash
+   GIT_TRACE=1 git -C Unified-Services-Portal push origin bapu
+   ```
+
+### Token Expired?
+
+- Generate a new token from: https://github.com/settings/tokens
+- Update the remote URL with the new token
+
+### SSH Key Issues?
+
+- Verify SSH connection: `ssh -T git@github.com`
+- Should see: "Hi vraj1091! You've successfully authenticated..."
+
+---
+
+## Quick Commands
+
 ```bash
-git init
-git remote add origin https://github.com/vraj1091/Unified-Services-Portal.git
+# Option 1: HTTPS with Token
+git -C Unified-Services-Portal remote set-url origin https://vraj1091:YOUR_TOKEN@github.com/vraj1091/Unified-Services-Portal.git
+git -C Unified-Services-Portal push origin bapu
+
+# Option 2: SSH
+git -C Unified-Services-Portal remote set-url origin git@github.com:vraj1091/Unified-Services-Portal.git
+git -C Unified-Services-Portal push origin bapu
+
+# Option 3: Check status
+git -C Unified-Services-Portal status
+git -C Unified-Services-Portal log --oneline -5
 ```
 
-### Error: "Updates were rejected"
-```bash
-git pull origin main --rebase
-git push -u origin main
-```
-
-### Error: "Permission denied"
-- Check your GitHub credentials
-- Use Personal Access Token instead of password
-- Or use SSH key authentication
+---
 
 ## Need Help?
 
-If you encounter any issues, share the error message and I'll help you resolve it!
+1. Check GitHub documentation: https://docs.github.com/en/authentication
+2. Verify repository access: https://github.com/vraj1091/Unified-Services-Portal/settings/access
+3. Check branch protection rules: https://github.com/vraj1091/Unified-Services-Portal/settings/branches
+
