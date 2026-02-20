@@ -9,9 +9,11 @@ import {
   Platform,
   ScrollView,
   Alert,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { colors, spacing, typography, borderRadius, shadows } from '../../theme/colors';
+import professionalTheme from '../../theme/professionalTheme';
 
 const RegisterScreen = ({ navigation }) => {
   const { register } = useAuth();
@@ -63,89 +65,101 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={professionalTheme.colors.background} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join Gujarat Services Portal</Text>
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoText}>GS</Text>
+            </View>
+            <Text style={styles.appName}>Create Account</Text>
+            <Text style={styles.tagline}>Join Gujarat Services Portal</Text>
+          </View>
 
-        {/* Form Card */}
-        <View style={styles.card}>
+          {/* Form Section */}
+          <View style={styles.formSection}>
           {/* Full Name */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your full name"
-              placeholderTextColor={colors.text.disabled}
-              value={formData.full_name}
-              onChangeText={(text) => setFormData({ ...formData, full_name: text })}
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>👤</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your full name"
+                placeholderTextColor={professionalTheme.colors.textTertiary}
+                value={formData.full_name}
+                onChangeText={(text) => setFormData({ ...formData, full_name: text })}
+              />
+            </View>
           </View>
 
           {/* Email */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email Address</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="your.email@example.com"
-              placeholderTextColor={colors.text.disabled}
-              value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text })}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>✉</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="your.email@example.com"
+                placeholderTextColor={professionalTheme.colors.textTertiary}
+                value={formData.email}
+                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
           </View>
 
           {/* Mobile */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Mobile Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="10-digit mobile number"
-              placeholderTextColor={colors.text.disabled}
-              value={formData.mobile}
-              onChangeText={(text) => setFormData({ ...formData, mobile: text })}
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>📱</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="10-digit mobile number"
+                placeholderTextColor={professionalTheme.colors.textTertiary}
+                value={formData.mobile}
+                onChangeText={(text) => setFormData({ ...formData, mobile: text })}
+                keyboardType="phone-pad"
+                maxLength={10}
+              />
+            </View>
           </View>
 
           {/* City */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>City</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your city"
-              placeholderTextColor={colors.text.disabled}
-              value={formData.city}
-              onChangeText={(text) => setFormData({ ...formData, city: text })}
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>📍</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your city"
+                placeholderTextColor={professionalTheme.colors.textTertiary}
+                value={formData.city}
+                onChangeText={(text) => setFormData({ ...formData, city: text })}
+              />
+            </View>
           </View>
 
           {/* Password */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>🔒</Text>
               <TextInput
-                style={styles.passwordInput}
+                style={styles.input}
                 placeholder="Minimum 6 characters"
-                placeholderTextColor={colors.text.disabled}
+                placeholderTextColor={professionalTheme.colors.textTertiary}
                 value={formData.password}
                 onChangeText={(text) => setFormData({ ...formData, password: text })}
                 secureTextEntry={!showPassword}
@@ -155,7 +169,7 @@ const RegisterScreen = ({ navigation }) => {
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
               >
-                <Text style={styles.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text>
+                <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -163,15 +177,18 @@ const RegisterScreen = ({ navigation }) => {
           {/* Confirm Password */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Re-enter password"
-              placeholderTextColor={colors.text.disabled}
-              value={formData.confirmPassword}
-              onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>🔒</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Re-enter password"
+                placeholderTextColor={professionalTheme.colors.textTertiary}
+                value={formData.confirmPassword}
+                onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+            </View>
           </View>
 
           {/* Register Button */}
@@ -193,123 +210,147 @@ const RegisterScreen = ({ navigation }) => {
               <Text style={styles.loginLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              By continuing, you agree to our{' '}
+              <Text style={styles.footerLink}>Terms</Text> and{' '}
+              <Text style={styles.footerLink}>Privacy Policy</Text>
+            </Text>
+          </View>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neutral.bg,
+    backgroundColor: professionalTheme.colors.background,
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: professionalTheme.spacing.xl,
   },
-  header: {
-    marginBottom: spacing.xl,
-  },
-  backButton: {
-    marginBottom: spacing.md,
-  },
-  backText: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.primary.main,
-  },
-  title: {
-    fontSize: typography.h2,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
-  },
-  card: {
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    ...shadows.lg,
-  },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: typography.small,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-  },
-  input: {
-    height: 48,
-    backgroundColor: colors.neutral.bg,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.md,
-    fontSize: typography.body,
-    color: colors.text.primary,
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
-  },
-  passwordContainer: {
-    flexDirection: 'row',
+  logoSection: {
     alignItems: 'center',
-    height: 48,
-    backgroundColor: colors.neutral.bg,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
+    paddingTop: professionalTheme.spacing.xxxl,
+    paddingBottom: professionalTheme.spacing.xxl,
   },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    fontSize: typography.body,
-    color: colors.text.primary,
-  },
-  eyeButton: {
-    paddingHorizontal: spacing.md,
-  },
-  eyeText: {
-    fontSize: typography.small,
-    fontWeight: typography.semibold,
-    color: colors.primary.main,
-  },
-  registerButton: {
-    height: 48,
-    backgroundColor: colors.primary.main,
-    borderRadius: borderRadius.sm,
+  logoContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: professionalTheme.colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.md,
-    ...shadows.md,
+    marginBottom: professionalTheme.spacing.lg,
+    ...professionalTheme.shadows.md,
+  },
+  logoText: {
+    fontSize: 28,
+    fontWeight: professionalTheme.typography.bold,
+    color: professionalTheme.colors.textInverse,
+  },
+  appName: {
+    fontSize: professionalTheme.typography.h3,
+    fontWeight: professionalTheme.typography.bold,
+    color: professionalTheme.colors.textPrimary,
+    marginBottom: professionalTheme.spacing.xs,
+  },
+  tagline: {
+    fontSize: professionalTheme.typography.bodySmall,
+    color: professionalTheme.colors.textSecondary,
+  },
+  formSection: {
+    flex: 1,
+  },
+  inputGroup: {
+    marginBottom: professionalTheme.spacing.lg,
+  },
+  label: {
+    fontSize: professionalTheme.typography.bodySmall,
+    fontWeight: professionalTheme.typography.medium,
+    color: professionalTheme.colors.textPrimary,
+    marginBottom: professionalTheme.spacing.sm,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: professionalTheme.colors.surface,
+    borderRadius: professionalTheme.borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: professionalTheme.colors.border,
+    paddingHorizontal: professionalTheme.spacing.lg,
+    height: 56,
+  },
+  inputIcon: {
+    fontSize: 20,
+    marginRight: professionalTheme.spacing.md,
+  },
+  input: {
+    flex: 1,
+    fontSize: professionalTheme.typography.body,
+    color: professionalTheme.colors.textPrimary,
+    height: '100%',
+  },
+  eyeButton: {
+    padding: professionalTheme.spacing.sm,
+  },
+  eyeIcon: {
+    fontSize: 20,
+  },
+  registerButton: {
+    backgroundColor: professionalTheme.colors.accent,
+    borderRadius: professionalTheme.borderRadius.md,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: professionalTheme.spacing.md,
+    ...professionalTheme.shadows.md,
   },
   registerButtonDisabled: {
     opacity: 0.6,
   },
   registerButtonText: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.text.inverse,
+    fontSize: professionalTheme.typography.body,
+    fontWeight: professionalTheme.typography.semibold,
+    color: professionalTheme.colors.textInverse,
   },
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.lg,
+    marginTop: professionalTheme.spacing.xl,
   },
   loginText: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
+    fontSize: professionalTheme.typography.body,
+    color: professionalTheme.colors.textSecondary,
   },
   loginLink: {
-    fontSize: typography.small,
-    fontWeight: typography.semibold,
-    color: colors.primary.main,
+    fontSize: professionalTheme.typography.body,
+    fontWeight: professionalTheme.typography.semibold,
+    color: professionalTheme.colors.accent,
+  },
+  footer: {
+    paddingVertical: professionalTheme.spacing.xxl,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: professionalTheme.typography.caption,
+    color: professionalTheme.colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  footerLink: {
+    color: professionalTheme.colors.accent,
+    fontWeight: professionalTheme.typography.medium,
   },
 });
 

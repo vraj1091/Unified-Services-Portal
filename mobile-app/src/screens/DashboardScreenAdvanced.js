@@ -86,11 +86,7 @@ const DashboardScreenAdvanced = ({ navigation }) => {
             <Text style={styles.greeting}>Welcome back,</Text>
             <Text style={styles.userName}>{user?.name || 'User'}</Text>
           </View>
-          <TouchableOpacity 
-            style={styles.avatarContainer}
-            onPress={() => navigation.navigate('Profile')}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity style={styles.avatarContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
                 {(user?.name || 'U').charAt(0).toUpperCase()}

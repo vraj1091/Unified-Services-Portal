@@ -8,19 +8,19 @@ import { ThemeProvider } from './src/context/ThemeContext';
 import { DocumentProvider } from './src/context/DocumentContext';
 
 // Import screens
-import LoginScreen from './src/screens/auth/LoginScreen';
+import LoginScreenPro from './src/screens/auth/LoginScreenPro';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
-import ApplicationsScreen from './src/screens/ApplicationsScreen';
-import DocumentsScreen from './src/screens/DocumentsScreen';
+import ApplicationsScreenPro from './src/screens/ApplicationsScreenPro';
+import DocumentsScreenPro from './src/screens/DocumentsScreenPro';
 import SupportScreen from './src/screens/SupportScreen';
 import UtilityServicesScreen from './src/screens/utility/UtilityServicesScreen';
 import ServiceProvidersScreen from './src/screens/utility/ServiceProvidersScreen';
 import DocumentUploadScreen from './src/screens/utility/DocumentUploadScreen';
 import FinalFormScreen from './src/screens/utility/FinalFormScreen';
-import CompanyFormationScreen from './src/screens/company/CompanyFormationScreen';
-import GovernmentGrantsScreen from './src/screens/grants/GovernmentGrantsScreen';
+import CompanyFormationScreenPro from './src/screens/company/CompanyFormationScreenPro';
+import GovernmentGrantsScreenPro from './src/screens/grants/GovernmentGrantsScreenPro';
 
 const Stack = createStackNavigator();
 
@@ -32,7 +32,7 @@ function AuthStack() {
         cardStyle: { backgroundColor: '#F8FAFC' },
       }}
     >
-      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Login" component={LoginScreenPro} />
       <Stack.Screen name="Register" component={RegisterScreen} />
     </Stack.Navigator>
   );
@@ -48,15 +48,15 @@ function AppStack() {
     >
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
-      <Stack.Screen name="Applications" component={ApplicationsScreen} />
-      <Stack.Screen name="Documents" component={DocumentsScreen} />
+      <Stack.Screen name="Applications" component={ApplicationsScreenPro} />
+      <Stack.Screen name="Documents" component={DocumentsScreenPro} />
       <Stack.Screen name="Support" component={SupportScreen} />
       <Stack.Screen name="UtilityServices" component={UtilityServicesScreen} />
       <Stack.Screen name="ServiceProviders" component={ServiceProvidersScreen} />
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
       <Stack.Screen name="FinalForm" component={FinalFormScreen} />
-      <Stack.Screen name="CompanyFormation" component={CompanyFormationScreen} />
-      <Stack.Screen name="GovernmentGrants" component={GovernmentGrantsScreen} />
+      <Stack.Screen name="CompanyFormation" component={CompanyFormationScreenPro} />
+      <Stack.Screen name="GovernmentGrants" component={GovernmentGrantsScreenPro} />
     </Stack.Navigator>
   );
 }

@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Modal,
   Platform,
+  Image,
 } from 'react-native';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme/colors';
 import { useDocuments } from '../context/DocumentContext';
@@ -30,29 +31,69 @@ const DocumentsScreen = ({ navigation }) => {
   );
 
   const handleUploadDocument = () => {
+    console.log('Upload document clicked');
+    
     if (Platform.OS === 'web') {
-      const docName = window.prompt('Enter document name:', 'New Document');
-      if (docName) {
-        const categoryChoice = window.prompt(
-          'Select category:\n1 - Identity\n2 - Address\n3 - Financial\n4 - Other',
-          '1'
-        );
-        const categories = ['identity', 'address', 'financial', 'other'];
-        const categoryIndex = parseInt(categoryChoice) - 1;
-        const category = categories[categoryIndex] || 'other';
+      // Create a hidden file input element
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*,.pdf';
+      input.style.display = 'none';
+      
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          console.log('File selected:', file.name);
+          
+          // Read file as data URL for preview
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const fileData = event.target.result;
+            
+            // Ask for category
+            const categoryChoice = prompt(
+              'Select category:\n1 - Identity\n2 - Address\n3 - Financial\n4 - Other',
+              '1'
+            );
+            
+            if (categoryChoice) {
+              const categories = ['identity', 'address', 'financial', 'other'];
+              const categoryIndex = parseInt(categoryChoice) - 1;
+              const category = categories[categoryIndex] || 'other';
+              
+              const fileName = file.name;
+              const fileSize = file.size;
+              const fileType = file.type.includes('pdf') ? 'PDF' : file.type.includes('image') ? 'JPG' : 'FILE';
+              
+              addDocument({
+                name: fileName,
+                category: category,
+                type: fileType,
+                size: (fileSize / 1024 / 1024).toFixed(2) + ' MB',
+                source: 'manual',
+                fileData: fileData, // Store the file data for preview and download
+                fileType: file.type,
+              });
+              
+              alert(`✓ Success!\n\n${fileName} uploaded successfully`);
+            }
+          };
+          
+          reader.readAsDataURL(file);
+        }
         
-        const fileSize = Math.random() * 3 + 1;
-        
-        addDocument({
-          name: docName,
-          category: category,
-          type: 'PDF',
-          size: fileSize.toFixed(1) + ' MB',
-          source: 'manual',
-        });
-        
-        window.alert(`✓ Success!\n\n${docName} uploaded successfully`);
-      }
+        // Clean up
+        document.body.removeChild(input);
+      };
+      
+      input.oncancel = () => {
+        console.log('Upload cancelled');
+        document.body.removeChild(input);
+      };
+      
+      // Add to DOM and trigger click
+      document.body.appendChild(input);
+      input.click();
     }
   };
 
@@ -62,8 +103,25 @@ const DocumentsScreen = ({ navigation }) => {
   };
 
   const handleDownload = (doc) => {
-    if (Platform.OS === 'web') {
-      window.alert(`✓ Download Started\\n\\n${doc.name} is being downloaded...`);
+    console.log('Download clicked for:', doc);
+    
+    if (Platform.OS === 'web' && doc.fileData) {
+      try {
+        // Create a download link
+        const link = document.createElement('a');
+        link.href = doc.fileData;
+        link.download = doc.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        alert(`✓ Download Started\n\n${doc.name} is being downloaded...`);
+      } catch (error) {
+        console.error('Download error:', error);
+        alert(`✗ Download Failed\n\nCould not download ${doc.name}`);
+      }
+    } else {
+      alert(`✓ Download Started\n\n${doc.name} is being downloaded...`);
     }
   };
 
@@ -128,22 +186,66 @@ const DocumentsScreen = ({ navigation }) => {
                   Category: {viewingDocument.category}
                 </Text>
 
-                {/* Document Content Placeholder */}
+                {/* Document Content Preview */}
                 <View style={styles.previewContent}>
-                  <View style={styles.documentPage}>
-                    <Text style={styles.documentPageText}>
-                      Document Preview
-                    </Text>
-                    <Text style={styles.documentPageSubtext}>
-                      This is a simulated preview of your document.
-                      In a production app, the actual document content would be displayed here.
-                    </Text>
-                    <View style={styles.documentLines}>
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                        <View key={i} style={styles.documentLine} />
-                      ))}
+                  {viewingDocument.fileData ? (
+                    // Show actual file preview
+                    <View style={styles.documentPage}>
+                      {viewingDocument.fileType && viewingDocument.fileType.includes('image') ? (
+                        // Image preview
+                        <Image
+                          source={{ uri: viewingDocument.fileData }}
+                          style={styles.imagePreview}
+                          resizeMode="contain"
+                        />
+                      ) : viewingDocument.fileType && viewingDocument.fileType.includes('pdf') ? (
+                        // PDF preview
+                        <View style={styles.pdfPreview}>
+                          <Text style={styles.pdfIcon}>📄</Text>
+                          <Text style={styles.pdfText}>PDF Document</Text>
+                          <Text style={styles.pdfSubtext}>
+                            Click Download to view the full PDF
+                          </Text>
+                          <iframe
+                            src={viewingDocument.fileData}
+                            style={{
+                              width: '100%',
+                              height: 400,
+                              border: '1px solid #E2E8F0',
+                              borderRadius: 8,
+                              marginTop: 16,
+                            }}
+                            title="PDF Preview"
+                          />
+                        </View>
+                      ) : (
+                        // Generic file preview
+                        <View style={styles.genericPreview}>
+                          <Text style={styles.genericIcon}>📎</Text>
+                          <Text style={styles.genericText}>File Preview</Text>
+                          <Text style={styles.genericSubtext}>
+                            Click Download to view this file
+                          </Text>
+                        </View>
+                      )}
                     </View>
-                  </View>
+                  ) : (
+                    // Placeholder for documents without file data
+                    <View style={styles.documentPage}>
+                      <Text style={styles.documentPageText}>
+                        Document Preview
+                      </Text>
+                      <Text style={styles.documentPageSubtext}>
+                        This is a simulated preview of your document.
+                        In a production app, the actual document content would be displayed here.
+                      </Text>
+                      <View style={styles.documentLines}>
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                          <View key={i} style={styles.documentLine} />
+                        ))}
+                      </View>
+                    </View>
+                  )}
                 </View>
               </View>
 
@@ -637,6 +739,50 @@ const styles = StyleSheet.create({
     height: 12,
     backgroundColor: colors.neutral.bg,
     borderRadius: borderRadius.xs,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 400,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.neutral.bg,
+  },
+  pdfPreview: {
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  pdfIcon: {
+    fontSize: 64,
+    marginBottom: spacing.md,
+  },
+  pdfText: {
+    fontSize: typography.h3,
+    fontWeight: typography.bold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  pdfSubtext: {
+    fontSize: typography.small,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  genericPreview: {
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  genericIcon: {
+    fontSize: 64,
+    marginBottom: spacing.md,
+  },
+  genericText: {
+    fontSize: typography.h3,
+    fontWeight: typography.bold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  genericSubtext: {
+    fontSize: typography.small,
+    color: colors.text.secondary,
+    textAlign: 'center',
   },
   infoSection: {
     margin: spacing.md,

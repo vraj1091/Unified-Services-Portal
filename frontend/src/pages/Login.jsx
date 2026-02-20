@@ -53,7 +53,7 @@ const Login = () => {
               </span>
             </h2>
             <p className="text-lg text-slate-500 leading-relaxed font-medium">
-              Experience the next generation of digital governance. Pay bills, apply for documents, and track status with ease and security.
+              Experience the next generation of digital governance. Apply for documents, track status with ease and security.
             </p>
           </div>
         </div>

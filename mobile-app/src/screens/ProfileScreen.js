@@ -6,45 +6,64 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  StatusBar,
   Alert,
+  Platform,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, typography, borderRadius, shadows } from '../theme/colors';
+import professionalTheme from '../theme/professionalTheme';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            navigation.replace('Login');
-          },
-        },
-      ]
-    );
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to logout?')) {
+        logout();
+      }
+    } else {
+      Alert.alert(
+        'Logout',
+        'Are you sure you want to logout?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Logout', onPress: logout, style: 'destructive' },
+        ]
+      );
+    }
   };
 
-  const menuItems = [
-    { title: 'Edit Profile', subtitle: 'Update your information', action: () => {} },
-    { title: 'Change Password', subtitle: 'Update your password', action: () => {} },
-    { title: 'My Applications', subtitle: 'View all applications', action: () => navigation.navigate('Applications') },
-    { title: 'My Documents', subtitle: 'Manage documents', action: () => navigation.navigate('Documents') },
-    { title: 'Notifications', subtitle: 'Manage notifications', action: () => {} },
-    { title: 'Settings', subtitle: 'App preferences', action: () => {} },
-    { title: 'Support', subtitle: 'Get help', action: () => navigation.navigate('Support') },
-    { title: 'About', subtitle: 'App information', action: () => {} },
+  const profileSections = [
+    {
+      title: 'Account',
+      items: [
+        { id: 'personal', label: 'Personal Information', icon: '👤', action: () => {} },
+        { id: 'security', label: 'Security & Privacy', icon: '🔒', action: () => {} },
+        { id: 'notifications', label: 'Notifications', icon: '🔔', action: () => {} },
+      ],
+    },
+    {
+      title: 'Services',
+      items: [
+        { id: 'applications', label: 'My Applications', icon: '📋', action: () => navigation.navigate('Applications') },
+        { id: 'documents', label: 'My Documents', icon: '📄', action: () => navigation.navigate('Documents') },
+        { id: 'payments', label: 'Payment History', icon: '💳', action: () => {} },
+      ],
+    },
+    {
+      title: 'Support',
+      items: [
+        { id: 'help', label: 'Help Center', icon: '❓', action: () => navigation.navigate('Support') },
+        { id: 'feedback', label: 'Send Feedback', icon: '💬', action: () => {} },
+        { id: 'about', label: 'About', icon: 'ℹ️', action: () => {} },
+      ],
+    },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={professionalTheme.colors.background} />
+      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -54,68 +73,85 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
+        <View style={styles.headerRight} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.full_name?.charAt(0) || 'U'}
-              </Text>
-            </View>
+          <View style={styles.avatarLarge}>
+            <Text style={styles.avatarLargeText}>
+              {(user?.name || 'U').charAt(0).toUpperCase()}
+            </Text>
           </View>
-          <Text style={styles.userName}>{user?.full_name || 'User'}</Text>
+          <Text style={styles.userName}>{user?.name || 'User'}</Text>
           <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
-          <View style={styles.userInfoRow}>
-            <View style={styles.userInfoItem}>
-              <Text style={styles.userInfoLabel}>Mobile</Text>
-              <Text style={styles.userInfoText}>{user?.mobile || 'N/A'}</Text>
+          
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>12</Text>
+              <Text style={styles.statLabel}>Applications</Text>
             </View>
-            <View style={styles.userInfoItem}>
-              <Text style={styles.userInfoLabel}>City</Text>
-              <Text style={styles.userInfoText}>{user?.city || 'N/A'}</Text>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>8</Text>
+              <Text style={styles.statLabel}>Documents</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>3</Text>
+              <Text style={styles.statLabel}>Active</Text>
             </View>
           </View>
         </View>
 
-        {/* Menu Items */}
-        <View style={styles.menuContainer}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={item.action}
-              style={styles.menuItem}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuInitial}>
-                <Text style={styles.menuInitialText}>
-                  {item.title.charAt(0)}
-                </Text>
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>{item.title}</Text>
-                <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-              </View>
-              <Text style={styles.menuArrow}>→</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Profile Sections */}
+        {profileSections.map((section, sectionIndex) => (
+          <View key={sectionIndex} style={styles.section}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <View style={styles.sectionCard}>
+              {section.items.map((item, itemIndex) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.menuItem,
+                    itemIndex !== section.items.length - 1 && styles.menuItemBorder
+                  ]}
+                  onPress={item.action}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.menuItemLeft}>
+                    <View style={styles.menuIcon}>
+                      <Text style={styles.menuIconText}>{item.icon}</Text>
+                    </View>
+                    <Text style={styles.menuLabel}>{item.label}</Text>
+                  </View>
+                  <Text style={styles.menuArrow}>→</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ))}
 
         {/* Logout Button */}
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={styles.logoutButton}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.logoutIcon}>🚪</Text>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* App Version */}
-        <Text style={styles.versionText}>Version 2.0.0</Text>
+        <View style={styles.footer}>
+          <Text style={styles.versionText}>Version 1.0.0</Text>
+          <Text style={styles.copyrightText}>© 2024 Gujarat Services</Text>
+        </View>
 
-        <View style={{ height: spacing.xxl }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -124,155 +160,188 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neutral.bg,
+    backgroundColor: professionalTheme.colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.neutral.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral.border,
+    justifyContent: 'space-between',
+    paddingHorizontal: professionalTheme.spacing.lg,
+    paddingVertical: professionalTheme.spacing.lg,
+    backgroundColor: professionalTheme.colors.surface,
+    ...professionalTheme.shadows.sm,
   },
   backButton: {
-    marginRight: spacing.sm,
-  },
-  backIcon: {
-    fontSize: typography.h2,
-    color: colors.text.primary,
-  },
-  headerTitle: {
-    fontSize: typography.h3,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-  },
-  profileCard: {
-    marginHorizontal: spacing.md,
-    marginTop: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
-    ...shadows.sm,
-  },
-  avatarContainer: {
-    marginBottom: spacing.md,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primary.main,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: typography.h1,
-    fontWeight: typography.bold,
-    color: colors.text.inverse,
+  backIcon: {
+    fontSize: 24,
+    color: professionalTheme.colors.textPrimary,
+    fontWeight: professionalTheme.typography.bold,
+  },
+  headerTitle: {
+    fontSize: professionalTheme.typography.h4,
+    fontWeight: professionalTheme.typography.bold,
+    color: professionalTheme.colors.textPrimary,
+  },
+  headerRight: {
+    width: 40,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  profileCard: {
+    backgroundColor: professionalTheme.colors.surface,
+    margin: professionalTheme.spacing.lg,
+    borderRadius: professionalTheme.borderRadius.lg,
+    padding: professionalTheme.spacing.xxl,
+    alignItems: 'center',
+    ...professionalTheme.shadows.md,
+  },
+  avatarLarge: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: professionalTheme.colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: professionalTheme.spacing.lg,
+    ...professionalTheme.shadows.lg,
+  },
+  avatarLargeText: {
+    fontSize: 40,
+    fontWeight: professionalTheme.typography.bold,
+    color: professionalTheme.colors.textInverse,
   },
   userName: {
-    fontSize: typography.h2,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
+    fontSize: professionalTheme.typography.h3,
+    fontWeight: professionalTheme.typography.bold,
+    color: professionalTheme.colors.textPrimary,
+    marginBottom: professionalTheme.spacing.xs,
   },
   userEmail: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
-    marginBottom: spacing.md,
+    fontSize: professionalTheme.typography.body,
+    color: professionalTheme.colors.textSecondary,
+    marginBottom: professionalTheme.spacing.xl,
   },
-  userInfoRow: {
+  statsRow: {
     flexDirection: 'row',
-    gap: spacing.lg,
-  },
-  userInfoItem: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.bg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
+    width: '100%',
+    paddingTop: professionalTheme.spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: professionalTheme.colors.border,
   },
-  userInfoLabel: {
-    fontSize: typography.tiny,
-    color: colors.text.secondary,
-    marginBottom: spacing.xs,
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
   },
-  userInfoText: {
-    fontSize: typography.small,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: professionalTheme.colors.border,
   },
-  menuContainer: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
+  statValue: {
+    fontSize: professionalTheme.typography.h3,
+    fontWeight: professionalTheme.typography.bold,
+    color: professionalTheme.colors.accent,
+    marginBottom: professionalTheme.spacing.xs,
+  },
+  statLabel: {
+    fontSize: professionalTheme.typography.bodySmall,
+    color: professionalTheme.colors.textSecondary,
+  },
+  section: {
+    paddingHorizontal: professionalTheme.spacing.lg,
+    marginTop: professionalTheme.spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: professionalTheme.typography.bodySmall,
+    fontWeight: professionalTheme.typography.semibold,
+    color: professionalTheme.colors.textSecondary,
+    marginBottom: professionalTheme.spacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  sectionCard: {
+    backgroundColor: professionalTheme.colors.surface,
+    borderRadius: professionalTheme.borderRadius.lg,
+    overflow: 'hidden',
+    ...professionalTheme.shadows.sm,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
-    ...shadows.sm,
+    justifyContent: 'space-between',
+    paddingVertical: professionalTheme.spacing.lg,
+    paddingHorizontal: professionalTheme.spacing.lg,
   },
-  menuInitial: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.primary.main,
+  menuItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: professionalTheme.colors.borderLight,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  menuInitialText: {
-    fontSize: typography.h3,
-    fontWeight: typography.bold,
-    color: colors.text.inverse,
-  },
-  menuContent: {
     flex: 1,
   },
-  menuTitle: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: professionalTheme.borderRadius.md,
+    backgroundColor: professionalTheme.colors.backgroundDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: professionalTheme.spacing.md,
   },
-  menuSubtitle: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
+  menuIconText: {
+    fontSize: 20,
+  },
+  menuLabel: {
+    fontSize: professionalTheme.typography.body,
+    fontWeight: professionalTheme.typography.medium,
+    color: professionalTheme.colors.textPrimary,
   },
   menuArrow: {
-    fontSize: typography.h3,
-    color: colors.neutral.divider,
-    fontWeight: typography.bold,
+    fontSize: 20,
+    color: professionalTheme.colors.textTertiary,
+    fontWeight: professionalTheme.typography.bold,
   },
   logoutButton: {
-    marginHorizontal: spacing.md,
-    marginTop: spacing.lg,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEE2E2',
-    borderWidth: 1,
-    borderColor: colors.status.error,
+    justifyContent: 'center',
+    backgroundColor: professionalTheme.colors.surface,
+    borderRadius: professionalTheme.borderRadius.lg,
+    paddingVertical: professionalTheme.spacing.lg,
+    borderWidth: 1.5,
+    borderColor: professionalTheme.colors.error,
+    ...professionalTheme.shadows.sm,
+  },
+  logoutIcon: {
+    fontSize: 20,
+    marginRight: professionalTheme.spacing.sm,
   },
   logoutText: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.status.error,
+    fontSize: professionalTheme.typography.body,
+    fontWeight: professionalTheme.typography.semibold,
+    color: professionalTheme.colors.error,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: professionalTheme.spacing.xxl,
   },
   versionText: {
-    textAlign: 'center',
-    fontSize: typography.tiny,
-    color: colors.text.disabled,
-    marginTop: spacing.lg,
+    fontSize: professionalTheme.typography.caption,
+    color: professionalTheme.colors.textTertiary,
+    marginBottom: professionalTheme.spacing.xs,
+  },
+  copyrightText: {
+    fontSize: professionalTheme.typography.caption,
+    color: professionalTheme.colors.textTertiary,
   },
 });
 
