@@ -40,8 +40,6 @@ services:
   - type: web
     name: gujarat-portal-frontend
     env: static
-    region: oregon
-    plan: free
     rootDir: frontend
     autoDeploy: true
     buildCommand: npm ci && npm run build
