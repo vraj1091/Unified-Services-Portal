@@ -1,8 +1,8 @@
 # Core FastAPI dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-pydantic==2.4.2
-pydantic-settings==2.0.3
+pydantic==2.12.2
+pydantic-settings==2.6.1
 
 # Database
 sqlalchemy==2.0.23

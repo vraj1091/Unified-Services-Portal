@@ -16,6 +16,8 @@ services:
     startCommand: bash -lc "python -m app.seed_data.seed_database && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /api/health
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
       - key: DATABASE_URL
         fromDatabase:
           name: gujarat-portal-db
@@ -46,6 +48,21 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
+        value: https://gujarat-portal-backend.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: web
+    name: gujarat-portal-mobile
+    env: static
+    rootDir: mobile-app
+    autoDeploy: true
+    buildCommand: npm ci && npx expo export:web
+    staticPublishPath: web-build
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
         value: https://gujarat-portal-backend.onrender.com
     routes:
       - type: rewrite
