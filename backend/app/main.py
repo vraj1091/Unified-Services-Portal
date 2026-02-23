@@ -18,14 +18,16 @@ app = FastAPI(
 
 def parse_cors_origins():
     raw_value = settings.BACKEND_CORS_ORIGINS
+    local_origin_regex = settings.BACKEND_CORS_ORIGIN_REGEX or r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+
     if not raw_value:
-        return ["*"], False
+        return ["*"], False, local_origin_regex
 
     try:
         parsed = json.loads(raw_value)
         if isinstance(parsed, list) and parsed:
             has_wildcard = "*" in parsed
-            return parsed, not has_wildcard
+            return parsed, not has_wildcard, None if has_wildcard else local_origin_regex
     except (json.JSONDecodeError, TypeError):
         pass
 
@@ -34,14 +36,15 @@ def parse_cors_origins():
         fallback = ["*"]
 
     has_wildcard = "*" in fallback
-    return fallback, not has_wildcard
+    return fallback, not has_wildcard, None if has_wildcard else local_origin_regex
 
-cors_origins, allow_credentials = parse_cors_origins()
+cors_origins, allow_credentials, cors_origin_regex = parse_cors_origins()
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
+    allow_origin_regex=cors_origin_regex,
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],

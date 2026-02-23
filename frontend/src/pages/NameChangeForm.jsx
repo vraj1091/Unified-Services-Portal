@@ -81,38 +81,32 @@ const NameChangeForm = () => {
       await api.post(`/applications/${appResponse.data.id}/submit`);
 
       // Special handling for Torrent Power - RPA automation
-      if (selectedSupplier.id === 'torrent_power') {
+      if (selectedSupplier.id === 'torrent-power') {
         try {
           // Call Torrent Power RPA automation
-          const rpaResponse = await api.post('/api/torrent-power/automate-name-change', {
-            login_data: {
-              username: formData.service_number || formData.consumer_number,
-              password: formData.password || ''
-            },
-            form_data: {
-              city: formData.city || 'Ahmedabad',
-              service_number: formData.service_number,
-              mobile: formData.mobile,
-              email: formData.email,
-              old_name: formData.applicant_name,
-              new_name: formData.new_name
-            }
+          const rpaResponse = await api.post('/automation/torrent-power/name-change', {
+            city: formData.city || 'Ahmedabad',
+            serviceNumber: formData.service_number || formData.serviceNumber || '',
+            tNumber: formData.t_no || formData.tNumber || 'NA',
+            mobile: formData.mobile || '',
+            email: formData.email || '',
+            confirmEmail: formData.confirm_email || formData.confirmEmail || formData.email || ''
           });
 
           if (rpaResponse.data.success) {
             setStep(3);
-            setMessage(`✅ Torrent Power RPA automation completed! ${rpaResponse.data.message}`);
+            setMessage(`Torrent Power automation completed. ${rpaResponse.data.message}`);
           } else {
             // If RPA fails, open Torrent Power website directly
-            window.open('https://connect.torrentpower.com/tplcp/application/namechangerequest', '_blank');
+            window.open(selectedSupplier.nameChangeUrl || selectedSupplier.portal, '_blank');
             setStep(3);
-            setMessage(`Application saved! RPA failed, please complete manually on Torrent Power website.`);
+            setMessage('Application saved. Automation failed, please complete manually on Torrent Power website.');
           }
         } catch (rpaError) {
           // If RPA fails, open Torrent Power website directly
-          window.open('https://connect.torrentpower.com/tplcp/application/namechangerequest', '_blank');
+          window.open(selectedSupplier.nameChangeUrl || selectedSupplier.portal, '_blank');
           setStep(3);
-          setMessage(`Application saved! RPA error, please complete manually on Torrent Power website.`);
+          setMessage('Application saved. Automation error, please complete manually on Torrent Power website.');
         }
       } else {
         // For ALL other suppliers, redirect to their official websites
@@ -155,16 +149,15 @@ const NameChangeForm = () => {
       new_name: 'New Name',
       reason: 'Reason for Name Change',
       security_deposit_option: 'Security Deposit Option',
-      old_security_deposit: 'Old Security Deposit Amount',
-      // Torrent Power specific fields
-      password: 'Account Password'
+      old_security_deposit: 'Old Security Deposit Amount'
     };
 
     const label = fieldLabels[fieldName] || fieldName;
     const isRequired = ['applicant_name', 'mobile', 'new_name'].includes(fieldName);
     
-    // For Torrent Power, make password required
-    const isTorrentRequired = selectedSupplier?.id === 'torrent_power' && fieldName === 'password';
+    // Torrent Power requires these fields for automation request
+    const torrentRequiredFields = ['service_number', 't_no', 'mobile', 'email'];
+    const isTorrentRequired = selectedSupplier?.id === 'torrent-power' && torrentRequiredFields.includes(fieldName);
 
     // Special handling for dropdown fields
     if (fieldName === 'reason') {
@@ -230,7 +223,7 @@ const NameChangeForm = () => {
           {label}{(isRequired || isTorrentRequired) && <span className="text-red-500">*</span>}
         </label>
         <input
-          type={fieldName === 'email' ? 'email' : fieldName === 'mobile' ? 'tel' : fieldName === 'password' ? 'password' : 'text'}
+          type={fieldName === 'email' ? 'email' : fieldName === 'mobile' ? 'tel' : 'text'}
           name={fieldName}
           value={formData[fieldName] || ''}
           onChange={handleChange}
@@ -469,9 +462,9 @@ const NameChangeForm = () => {
                     : selectedSupplier.fields
                   ).map(field => renderFieldInput(field))}
 
-                  <div className={`${selectedSupplier.id === 'torrent_power' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-4 mt-6`}>
-                    <p className={`text-sm ${selectedSupplier.id === 'torrent_power' ? 'text-orange-800' : 'text-blue-800'}`}>
-                      {selectedSupplier.id === 'torrent_power' ? (
+                  <div className={`${selectedSupplier.id === 'torrent-power' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-4 mt-6`}>
+                    <p className={`text-sm ${selectedSupplier.id === 'torrent-power' ? 'text-orange-800' : 'text-blue-800'}`}>
+                      {selectedSupplier.id === 'torrent-power' ? (
                         <>🤖 <strong>RPA Automation:</strong> After clicking submit, our system will automatically login to your Torrent Power account, navigate to name change form, and fill all details. You only need to review and submit.</>
                       ) : (
                         <>🔗 <strong>Direct Redirect:</strong> After clicking submit, you will be redirected to the official {selectedSupplier.name} website. Please login and complete the name change process manually.</>
@@ -593,13 +586,13 @@ const NameChangeForm = () => {
               Application Submitted!
             </h2>
             <p className="text-gray-600 mb-6">
-              {selectedSupplier.id === 'torrent_power' 
+              {selectedSupplier.id === 'torrent-power' 
                 ? 'Your Torrent Power name change has been processed with RPA automation.'
                 : 'Your application has been saved and the portal has opened in a new tab.'
               }
             </p>
 
-            {selectedSupplier.id === 'torrent_power' ? (
+            {selectedSupplier.id === 'torrent-power' ? (
               <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 text-left">
                 <p className="font-semibold text-orange-800 mb-2">🤖 RPA Automation Completed:</p>
                 <ol className="text-sm text-orange-700 space-y-1 list-decimal list-inside">

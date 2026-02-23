@@ -117,7 +117,8 @@ const NewConnectionForm = () => {
       window.open(portalUrl, '_blank');
 
       setStep(3);
-      setMessage(`Application submitted! Tracking ID: ${appResponse.data.tracking_id}`);
+      const applicationId = appResponse?.data?.id;
+      setMessage(applicationId ? `Application submitted! Application ID: ${applicationId}` : 'Application submitted successfully.');
     } catch (error) {
       setMessage('Failed to save application. Please try again.');
     } finally {

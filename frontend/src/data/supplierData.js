@@ -88,7 +88,7 @@ export const suppliers = {
         offlineForm: 'https://www.torrentpower.com/public/pdf/investors/AHDAHDNameChangeLTENGForm2407191_20211129182958.pdf',
         hasOnlinePortal: true,
         offlineNote: 'RPA automation available - Direct form filling on official website',
-        fields: ['city', 'service_number', 'applicant_name', 'new_name', 'mobile', 'email', 'password']
+        fields: ['city', 'service_number', 't_no', 'applicant_name', 'new_name', 'mobile', 'email']
       },
       {
         id: 'pgvcl',
