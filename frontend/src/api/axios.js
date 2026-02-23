@@ -25,6 +25,7 @@ const getApiBaseUrl = () => {
 
 const api = axios.create({
   baseURL: getApiBaseUrl(),
+  timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -57,7 +58,11 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || '';
+    const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
+    const hasToken = !!localStorage.getItem('token');
+
+    if (error.response?.status === 401 && !isAuthRequest && hasToken) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }

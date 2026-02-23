@@ -39,10 +39,27 @@ export const AuthProvider = ({ children }) => {
       });
       
       localStorage.setItem('token', response.data.access_token);
-      await fetchUser();
+      const meResponse = await api.get('/auth/me');
+      setUser(meResponse.data);
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
+      localStorage.removeItem('token');
+
+      if (error.code === 'ECONNABORTED') {
+        return {
+          success: false,
+          error: 'Server is taking too long to respond. Please try again in a few seconds.'
+        };
+      }
+
+      if (!error.response) {
+        return {
+          success: false,
+          error: 'Unable to reach server. Please check deployment status and try again.'
+        };
+      }
+
       return { 
         success: false, 
         error: error.response?.data?.detail || 'Login failed. Please check your credentials.' 
