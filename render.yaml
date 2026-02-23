@@ -1,3 +1,9 @@
+databases:
+  - name: gujarat-portal-db
+    databaseName: gujarat_portal
+    user: gujarat_portal_user
+    plan: free
+
 services:
   - type: web
     name: gujarat-portal-backend
@@ -7,17 +13,19 @@ services:
     rootDir: backend
     autoDeploy: true
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
-    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: bash -lc "python -m app.seed_data.seed_database && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
-        value: sqlite:///./unified_portal.db
+        fromDatabase:
+          name: gujarat-portal-db
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: 30
+        value: "30"
       - key: ENVIRONMENT
         value: production
       - key: DEBUG
@@ -25,32 +33,21 @@ services:
       - key: FRONTEND_URL
         value: https://gujarat-portal-frontend.onrender.com
       - key: BACKEND_CORS_ORIGINS
-        value: '["https://gujarat-portal-frontend.onrender.com","https://gujarat-portal-mobile.onrender.com","http://localhost:3000","http://localhost:5173","http://localhost:19006"]'
+        value: '["https://gujarat-portal-frontend.onrender.com"]'
+      - key: BACKEND_CORS_ORIGIN_REGEX
+        value: '^https://.*\.onrender\.com$|^https?://(localhost|127\.0\.0\.1)(:\d+)?$'
 
   - type: web
     name: gujarat-portal-frontend
     env: static
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
+    region: oregon
+    plan: free
     rootDir: frontend
     autoDeploy: true
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://gujarat-portal-backend.onrender.com
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-
-  - type: web
-    name: gujarat-portal-mobile
-    env: static
-    buildCommand: npm ci && npx expo export:web
-    staticPublishPath: web-build
-    rootDir: mobile-app
-    autoDeploy: true
-    envVars:
-      - key: EXPO_PUBLIC_API_URL
         value: https://gujarat-portal-backend.onrender.com
     routes:
       - type: rewrite

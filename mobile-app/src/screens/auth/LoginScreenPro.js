@@ -42,66 +42,68 @@ const LoginScreenPro = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <LinearGradient colors={['#214CC8', '#173A9F']} style={styles.hero}>
-            <View style={styles.logoWrap}>
-              <Ionicons name="shield-checkmark" size={28} color={mobileTheme.colors.textOnPrimary} />
-            </View>
-            <Text style={styles.heroTitle}>Gujarat Services Portal</Text>
-            <Text style={styles.heroSubtitle}>Secure digital access to state government services</Text>
-          </LinearGradient>
+          <View style={styles.contentWrap}>
+            <LinearGradient colors={['#214CC8', '#173A9F']} style={styles.hero}>
+              <View style={styles.logoWrap}>
+                <Ionicons name="shield-checkmark" size={28} color={mobileTheme.colors.textOnPrimary} />
+              </View>
+              <Text style={styles.heroTitle}>Gujarat Services Portal</Text>
+              <Text style={styles.heroSubtitle}>Secure digital access to state government services</Text>
+            </LinearGradient>
 
-          <View style={styles.card}>
-            <Text style={styles.title}>Sign In</Text>
-            <Text style={styles.subtitle}>Enter credentials to continue</Text>
+            <View style={styles.card}>
+              <Text style={styles.title}>Sign In</Text>
+              <Text style={styles.subtitle}>Enter credentials to continue</Text>
 
-            <View style={styles.inputWrap}>
-              <Ionicons name="mail-outline" size={18} color={mobileTheme.colors.textTertiary} />
-              <TextInput
-                style={styles.input}
-                placeholder="Email address"
-                placeholderTextColor={mobileTheme.colors.textTertiary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputWrap}>
-              <Ionicons name="lock-closed-outline" size={18} color={mobileTheme.colors.textTertiary} />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor={mobileTheme.colors.textTertiary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)} activeOpacity={0.8}>
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={20}
-                  color={mobileTheme.colors.textTertiary}
+              <View style={styles.inputWrap}>
+                <Ionicons name="mail-outline" size={18} color={mobileTheme.colors.textTertiary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email address"
+                  placeholderTextColor={mobileTheme.colors.textTertiary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
+              </View>
+
+              <View style={styles.inputWrap}>
+                <Ionicons name="lock-closed-outline" size={18} color={mobileTheme.colors.textTertiary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor={mobileTheme.colors.textTertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)} activeOpacity={0.8}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={mobileTheme.colors.textTertiary}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} activeOpacity={0.88} disabled={loading}>
+                <Text style={styles.primaryButtonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
               </TouchableOpacity>
+
+              <View style={styles.footerRow}>
+                <Text style={styles.footerText}>No account yet?</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                  <Text style={styles.footerLink}> Create account</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} activeOpacity={0.88} disabled={loading}>
-              <Text style={styles.primaryButtonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
-            </TouchableOpacity>
-
-            <View style={styles.footerRow}>
-              <Text style={styles.footerText}>No account yet?</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.footerLink}> Create account</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.bottomText}>Government of Gujarat | Encrypted session</Text>
           </View>
-
-          <Text style={styles.bottomText}>Government of Gujarat | Encrypted session</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -116,10 +118,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: mobileTheme.spacing.lg,
-    paddingBottom: mobileTheme.spacing.xxl,
+    paddingVertical: mobileTheme.spacing.lg,
+    justifyContent: 'center',
+  },
+  contentWrap: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
   },
   hero: {
-    marginTop: mobileTheme.spacing.md,
     borderRadius: mobileTheme.radius.xl,
     padding: mobileTheme.spacing.xl,
   },

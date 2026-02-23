@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     
     # CORS Settings
     BACKEND_CORS_ORIGINS: Optional[str] = '["http://localhost:5173","http://127.0.0.1:5173","http://localhost:3000","http://127.0.0.1:3000"]'
-    BACKEND_CORS_ORIGIN_REGEX: Optional[str] = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+    BACKEND_CORS_ORIGIN_REGEX: Optional[str] = r"^https://.*\.onrender\.com$|^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
     
     # Environment Settings
     ENVIRONMENT: Optional[str] = "development"

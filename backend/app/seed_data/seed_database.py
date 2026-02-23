@@ -20,7 +20,7 @@ def seed_database():
     # Create all tables
     print("Creating database tables...")
     Base.metadata.create_all(bind=engine)
-    print("✓ Tables created successfully")
+    print("[OK] Tables created successfully")
     
     # Seed government grants
     print("\nSeeding government grants...")
@@ -28,7 +28,7 @@ def seed_database():
     
     # Note: Services are loaded from services_data.json via service_loader.py
     # This function just ensures tables exist
-    print("✓ Database ready for services data")
+    print("[OK] Database ready for services data")
 
 if __name__ == "__main__":
     seed_database()

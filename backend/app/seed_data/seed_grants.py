@@ -14,7 +14,7 @@ def seed_grants():
         # Check if grants already exist
         existing_count = db.query(Grant).count()
         if existing_count > 0:
-            print(f"✓ Grants already seeded ({existing_count} grants found)")
+            print(f"[OK] Grants already seeded ({existing_count} grants found)")
             return
         
         grants_data = [
@@ -407,10 +407,10 @@ def seed_grants():
             db.add(grant)
         
         db.commit()
-        print(f"✓ Successfully seeded {len(grants_data)} government grants")
+        print(f"[OK] Successfully seeded {len(grants_data)} government grants")
         
     except Exception as e:
-        print(f"✗ Error seeding grants: {str(e)}")
+        print(f"[ERROR] Error seeding grants: {str(e)}")
         db.rollback()
     finally:
         db.close()

@@ -4,10 +4,15 @@ from sqlalchemy.orm import sessionmaker
 from app.config import get_settings
 
 settings = get_settings()
+database_url = settings.DATABASE_URL
+
+# Render can provide postgres:// URLs; SQLAlchemy expects postgresql://
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 # SQLite needs connect_args for check_same_thread
-connect_args = {"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
-engine = create_engine(settings.DATABASE_URL, connect_args=connect_args)
+connect_args = {"check_same_thread": False} if "sqlite" in database_url else {}
+engine = create_engine(database_url, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
