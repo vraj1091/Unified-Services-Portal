@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,76 +9,106 @@ import {
   Modal,
   Platform,
   Image,
-  StatusBar,
+  Alert,
 } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useDocuments } from '../context/DocumentContext';
-import professionalTheme from '../theme/professionalTheme';
+import mobileTheme from '../theme/mobileTheme';
 
-const DocumentsScreenPro = ({ navigation }) => {
+const DocumentsScreenPro = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewingDocument, setViewingDocument] = useState(null);
   const { documents, addDocument, removeDocument } = useDocuments();
 
-  const categories = [
-    { key: 'all', label: 'All', count: documents.length },
-    { key: 'identity', label: 'Identity', count: documents.filter(d => d.category === 'identity').length },
-    { key: 'address', label: 'Address', count: documents.filter(d => d.category === 'address').length },
-    { key: 'financial', label: 'Financial', count: documents.filter(d => d.category === 'financial').length },
-    { key: 'other', label: 'Other', count: documents.filter(d => d.category === 'other').length },
-  ];
-
-  const filteredDocuments = documents.filter(
-    doc => selectedCategory === 'all' || doc.category === selectedCategory
+  const categories = useMemo(
+    () => [
+      { key: 'all', label: 'All', count: documents.length },
+      { key: 'identity', label: 'Identity', count: documents.filter((d) => d.category === 'identity').length },
+      { key: 'address', label: 'Address', count: documents.filter((d) => d.category === 'address').length },
+      { key: 'financial', label: 'Financial', count: documents.filter((d) => d.category === 'financial').length },
+      { key: 'other', label: 'Other', count: documents.filter((d) => d.category === 'other').length },
+    ],
+    [documents]
   );
 
-  const handleUploadDocument = () => {
-    if (Platform.OS === 'web') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,.pdf';
-      input.style.display = 'none';
-      
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const fileData = event.target.result;
-            const categoryChoice = prompt(
-              'Select category:\n1 - Identity\n2 - Address\n3 - Financial\n4 - Other',
-              '1'
-            );
-            
-            if (categoryChoice) {
-              const categories = ['identity', 'address', 'financial', 'other'];
-              const categoryIndex = parseInt(categoryChoice) - 1;
-              const category = categories[categoryIndex] || 'other';
-              
-              addDocument({
-                name: file.name,
-                category: category,
-                type: file.type.includes('pdf') ? 'PDF' : 'JPG',
-                size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-                source: 'manual',
-                fileData: fileData,
-                fileType: file.type,
-              });
-              
-              alert(`✓ ${file.name} uploaded successfully`);
-            }
-          };
-          reader.readAsDataURL(file);
-        }
+  const filteredDocuments = documents.filter((doc) => selectedCategory === 'all' || doc.category === selectedCategory);
+
+  const parseFileType = (type) => (type || '').toLowerCase().includes('pdf') ? 'PDF' : 'Image';
+
+  const handleUploadWeb = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,.pdf';
+    input.style.display = 'none';
+
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) {
         document.body.removeChild(input);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const fileData = event.target.result;
+        const fileType = parseFileType(file.type);
+
+        addDocument({
+          name: file.name,
+          category: 'other',
+          type: fileType,
+          size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+          source: 'manual',
+          fileData,
+          fileType: file.type,
+        });
+
+        window.alert(`${file.name} uploaded successfully.`);
       };
-      
-      input.oncancel = () => {
-        document.body.removeChild(input);
-      };
-      
-      document.body.appendChild(input);
-      input.click();
+
+      reader.readAsDataURL(file);
+      document.body.removeChild(input);
+    };
+
+    document.body.appendChild(input);
+    input.click();
+  };
+
+  const handleUploadNative = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+
+      if (result.canceled || !result.assets?.length) return;
+
+      const file = result.assets[0];
+      const type = parseFileType(file.mimeType);
+      addDocument({
+        name: file.name,
+        category: 'other',
+        type,
+        size: `${((file.size || 0) / 1024 / 1024).toFixed(2)} MB`,
+        source: 'manual',
+        fileType: file.mimeType,
+        uri: file.uri,
+      });
+
+      Alert.alert('Uploaded', `${file.name} uploaded successfully.`);
+    } catch (error) {
+      Alert.alert('Upload Failed', 'Unable to upload document. Please try again.');
     }
+  };
+
+  const handleUploadDocument = async () => {
+    if (Platform.OS === 'web') {
+      handleUploadWeb();
+      return;
+    }
+    await handleUploadNative();
   };
 
   const handleDownload = (doc) => {
@@ -89,23 +119,35 @@ const DocumentsScreenPro = ({ navigation }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      return;
     }
+
+    Alert.alert('Download', 'Download is currently supported on web preview mode.');
   };
 
   const handleDelete = (doc) => {
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Delete ${doc.name}?`)) {
-        removeDocument(doc.id);
-        setViewingDocument(null);
-      }
-    }
+    Alert.alert('Delete Document', `Delete "${doc.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          removeDocument(doc.id);
+          setViewingDocument(null);
+        },
+      },
+    ]);
   };
+
+  const isImage = (doc) => {
+    const mime = (doc.fileType || '').toLowerCase();
+    return mime.includes('image') || doc.type === 'Image';
+  };
+
+  const previewUri = (doc) => doc.fileData || doc.uri || null;
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={professionalTheme.colors.background} />
-      
-      {/* Document Viewer Modal */}
       <Modal
         visible={viewingDocument !== null}
         animationType="slide"
@@ -115,532 +157,353 @@ const DocumentsScreenPro = ({ navigation }) => {
         {viewingDocument && (
           <SafeAreaView style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity
-                onPress={() => setViewingDocument(null)}
-                style={styles.modalCloseButton}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.modalCloseIcon}>←</Text>
+              <TouchableOpacity onPress={() => setViewingDocument(null)} style={styles.iconButton}>
+                <Ionicons name="arrow-back" size={22} color={mobileTheme.colors.textPrimary} />
               </TouchableOpacity>
-              <View style={styles.modalHeaderContent}>
-                <Text style={styles.modalTitle}>{viewingDocument.name}</Text>
-                <Text style={styles.modalSubtitle}>
-                  {viewingDocument.type} • {viewingDocument.size}
-                </Text>
-              </View>
+              <Text numberOfLines={1} style={styles.modalTitle}>{viewingDocument.name}</Text>
             </View>
 
-            <ScrollView style={styles.modalBody}>
-              <View style={styles.documentPreview}>
-                {viewingDocument.fileData && viewingDocument.fileType && viewingDocument.fileType.includes('image') ? (
-                  <Image
-                    source={{ uri: viewingDocument.fileData }}
-                    style={styles.imagePreview}
-                    resizeMode="contain"
-                  />
-                ) : viewingDocument.fileData && viewingDocument.fileType && viewingDocument.fileType.includes('pdf') ? (
-                  <View style={styles.pdfPreview}>
-                    <Text style={styles.pdfIcon}>📄</Text>
-                    <Text style={styles.pdfText}>PDF Document</Text>
-                    <Text style={styles.pdfSubtext}>Click Download to view</Text>
-                  </View>
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              <View style={styles.previewCard}>
+                {isImage(viewingDocument) && previewUri(viewingDocument) ? (
+                  <Image source={{ uri: previewUri(viewingDocument) }} style={styles.previewImage} resizeMode="contain" />
                 ) : (
-                  <View style={styles.placeholderPreview}>
-                    <Text style={styles.placeholderIcon}>📄</Text>
-                    <Text style={styles.placeholderText}>Document Preview</Text>
+                  <View style={styles.pdfState}>
+                    <Ionicons name="document-text-outline" size={54} color={mobileTheme.colors.primary} />
+                    <Text style={styles.pdfText}>PDF document preview</Text>
                   </View>
                 )}
               </View>
 
               <View style={styles.infoCard}>
-                <Text style={styles.infoTitle}>Document Information</Text>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Name</Text>
-                  <Text style={styles.infoValue}>{viewingDocument.name}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Type</Text>
-                  <Text style={styles.infoValue}>{viewingDocument.type}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Size</Text>
-                  <Text style={styles.infoValue}>{viewingDocument.size}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Category</Text>
-                  <Text style={styles.infoValue}>{viewingDocument.category}</Text>
-                </View>
-                <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
-                  <Text style={styles.infoLabel}>Uploaded</Text>
-                  <Text style={styles.infoValue}>{viewingDocument.uploadedDate}</Text>
-                </View>
+                <InfoRow label="Type" value={viewingDocument.type} />
+                <InfoRow label="Size" value={viewingDocument.size} />
+                <InfoRow label="Category" value={viewingDocument.category} />
+                <InfoRow label="Uploaded" value={viewingDocument.uploadedDate} />
               </View>
             </ScrollView>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                onPress={() => handleDownload(viewingDocument)}
-                style={styles.actionButton}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.actionButtonText}>Download</Text>
+              <TouchableOpacity style={styles.secondaryButton} onPress={() => handleDownload(viewingDocument)}>
+                <Text style={styles.secondaryButtonText}>Download</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleDelete(viewingDocument)}
-                style={styles.actionButtonDanger}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.actionButtonTextDanger}>Delete</Text>
+              <TouchableOpacity style={styles.dangerButton} onPress={() => handleDelete(viewingDocument)}>
+                <Text style={styles.dangerButtonText}>Delete</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
         )}
       </Modal>
 
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>My Documents</Text>
-          <Text style={styles.headerSubtitle}>{documents.length} documents</Text>
+        <View>
+          <Text style={styles.headerTitle}>Document Vault</Text>
+          <Text style={styles.headerSubtitle}>{documents.length} stored files</Text>
         </View>
-        <TouchableOpacity
-          onPress={handleUploadDocument}
-          style={styles.uploadButton}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.uploadIcon}>+</Text>
+        <TouchableOpacity onPress={handleUploadDocument} style={styles.uploadButton} activeOpacity={0.85}>
+          <Ionicons name="add" size={24} color={mobileTheme.colors.textOnPrimary} />
         </TouchableOpacity>
       </View>
 
-      {/* Categories */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
-        contentContainerStyle={styles.categoriesContent}
+        style={styles.filterBar}
+        contentContainerStyle={styles.filterContent}
       >
         {categories.map((cat) => (
           <TouchableOpacity
             key={cat.key}
             onPress={() => setSelectedCategory(cat.key)}
-            style={[
-              styles.categoryChip,
-              selectedCategory === cat.key && styles.categoryChipActive,
-            ]}
-            activeOpacity={0.8}
+            style={[styles.filterChip, selectedCategory === cat.key && styles.filterChipActive]}
           >
-            <Text
-              style={[
-                styles.categoryText,
-                selectedCategory === cat.key && styles.categoryTextActive,
-              ]}
-            >
+            <Text style={[styles.filterChipText, selectedCategory === cat.key && styles.filterChipTextActive]}>
               {cat.label} ({cat.count})
             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {/* Documents List */}
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.documentsContainer}>
+      <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+        <View style={styles.listContent}>
           {filteredDocuments.length === 0 ? (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}>
-                <Text style={styles.emptyIconText}>📄</Text>
-              </View>
-              <Text style={styles.emptyTitle}>No Documents Found</Text>
-              <Text style={styles.emptyText}>
-                Upload your first document to get started
-              </Text>
-              <TouchableOpacity
-                onPress={handleUploadDocument}
-                style={styles.emptyButton}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.emptyButtonText}>Upload Document</Text>
+            <View style={styles.emptyCard}>
+              <Ionicons name="folder-open-outline" size={30} color={mobileTheme.colors.textTertiary} />
+              <Text style={styles.emptyTitle}>No Documents Yet</Text>
+              <Text style={styles.emptyText}>Upload your first file to start your document vault.</Text>
+              <TouchableOpacity style={styles.primaryButton} onPress={handleUploadDocument} activeOpacity={0.85}>
+                <Text style={styles.primaryButtonText}>Upload Document</Text>
               </TouchableOpacity>
             </View>
           ) : (
             filteredDocuments.map((doc) => (
-              <TouchableOpacity
-                key={doc.id}
-                onPress={() => setViewingDocument(doc)}
-                style={styles.documentCard}
-                activeOpacity={0.8}
-              >
-                <View style={styles.documentIcon}>
-                  <Text style={styles.documentIconText}>
-                    {doc.type === 'PDF' ? '📄' : '🖼'}
-                  </Text>
+              <TouchableOpacity key={doc.id} onPress={() => setViewingDocument(doc)} style={styles.docCard} activeOpacity={0.85}>
+                <View style={styles.docIcon}>
+                  <Ionicons
+                    name={doc.type === 'PDF' ? 'document-text-outline' : 'image-outline'}
+                    size={20}
+                    color={mobileTheme.colors.primary}
+                  />
                 </View>
                 <View style={styles.docInfo}>
-                  <Text style={styles.documentName}>{doc.name}</Text>
-                  <View style={styles.documentMeta}>
-                    <Text style={styles.metaText}>{doc.type}</Text>
-                    <Text style={styles.metaSeparator}>•</Text>
-                    <Text style={styles.metaText}>{doc.size}</Text>
-                    <Text style={styles.metaSeparator}>•</Text>
-                    <Text style={styles.metaText}>{doc.uploadedDate}</Text>
-                  </View>
+                  <Text style={styles.docName} numberOfLines={1}>{doc.name}</Text>
+                  <Text style={styles.docMeta}>{doc.type} - {doc.size}</Text>
                 </View>
-                <View style={styles.documentArrow}>
-                  <Text style={styles.arrowIcon}>→</Text>
-                </View>
+                <Ionicons name="chevron-forward" size={18} color={mobileTheme.colors.textTertiary} />
               </TouchableOpacity>
             ))
           )}
         </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+const InfoRow = ({ label, value }) => (
+  <View style={styles.infoRow}>
+    <Text style={styles.infoLabel}>{label}</Text>
+    <Text style={styles.infoValue}>{value || 'N/A'}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.background,
+    backgroundColor: mobileTheme.colors.background,
   },
   header: {
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingTop: mobileTheme.spacing.md,
+    paddingBottom: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: professionalTheme.spacing.lg,
-    paddingVertical: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.surface,
-    ...professionalTheme.shadows.sm,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 24,
-    color: professionalTheme.colors.textPrimary,
-    fontWeight: professionalTheme.typography.bold,
-  },
-  headerContent: {
-    flex: 1,
-    marginLeft: professionalTheme.spacing.sm,
+    justifyContent: 'space-between',
   },
   headerTitle: {
-    fontSize: professionalTheme.typography.h4,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h1,
+    color: mobileTheme.colors.textPrimary,
+    fontWeight: mobileTheme.typography.bold,
   },
   headerSubtitle: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-    marginTop: professionalTheme.spacing.xs,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
   },
   uploadButton: {
     width: 48,
     height: 48,
-    borderRadius: professionalTheme.borderRadius.md,
-    backgroundColor: professionalTheme.colors.accent,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    ...professionalTheme.shadows.md,
+    backgroundColor: mobileTheme.colors.primary,
+    ...mobileTheme.shadows.sm,
   },
-  uploadIcon: {
-    fontSize: 24,
-    color: professionalTheme.colors.textInverse,
-    fontWeight: professionalTheme.typography.bold,
+  filterBar: {
+    maxHeight: 52,
   },
-  categoriesContainer: {
-    backgroundColor: professionalTheme.colors.surface,
-    paddingVertical: professionalTheme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: professionalTheme.colors.borderLight,
-  },
-  categoriesContent: {
-    paddingHorizontal: professionalTheme.spacing.lg,
-  },
-  categoryChip: {
-    paddingHorizontal: professionalTheme.spacing.lg,
-    paddingVertical: professionalTheme.spacing.md,
-    borderRadius: professionalTheme.borderRadius.full,
-    backgroundColor: professionalTheme.colors.backgroundDark,
-    marginRight: professionalTheme.spacing.sm,
-    borderWidth: 1.5,
-    borderColor: professionalTheme.colors.border,
-    height: 40,
-    justifyContent: 'center',
+  filterContent: {
+    paddingHorizontal: mobileTheme.spacing.lg,
     alignItems: 'center',
+    gap: mobileTheme.spacing.sm,
   },
-  categoryChipActive: {
-    backgroundColor: professionalTheme.colors.accent,
-    borderColor: professionalTheme.colors.accent,
+  filterChip: {
+    borderRadius: mobileTheme.radius.full,
+    backgroundColor: mobileTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    paddingHorizontal: mobileTheme.spacing.md,
+    paddingVertical: mobileTheme.spacing.sm,
   },
-  categoryText: {
-    fontSize: professionalTheme.typography.bodySmall,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textSecondary,
+  filterChipActive: {
+    backgroundColor: mobileTheme.colors.primary,
+    borderColor: mobileTheme.colors.primary,
   },
-  categoryTextActive: {
-    color: professionalTheme.colors.textInverse,
+  filterChipText: {
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  documentsContainer: {
-    padding: professionalTheme.spacing.lg,
+  filterChipTextActive: {
+    color: mobileTheme.colors.textOnPrimary,
   },
-  documentCard: {
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    padding: mobileTheme.spacing.lg,
+  },
+  docCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
-    padding: professionalTheme.spacing.lg,
-    marginBottom: professionalTheme.spacing.md,
-    ...professionalTheme.shadows.sm,
+    padding: mobileTheme.spacing.md,
+    borderRadius: mobileTheme.radius.lg,
+    backgroundColor: mobileTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    marginBottom: mobileTheme.spacing.sm,
+    ...mobileTheme.shadows.sm,
   },
-  documentIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: professionalTheme.borderRadius.md,
-    backgroundColor: professionalTheme.colors.backgroundDark,
+  docIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: mobileTheme.colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: professionalTheme.spacing.md,
-  },
-  documentIconText: {
-    fontSize: 24,
+    marginRight: mobileTheme.spacing.md,
   },
   docInfo: {
     flex: 1,
   },
-  documentName: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
+  docName: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  documentMeta: {
-    flexDirection: 'row',
+  docMeta: {
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
+  },
+  emptyCard: {
+    borderRadius: mobileTheme.radius.xl,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
     alignItems: 'center',
-  },
-  metaText: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-  },
-  metaSeparator: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textTertiary,
-    marginHorizontal: professionalTheme.spacing.xs,
-  },
-  documentArrow: {
-    width: 32,
-    height: 32,
-    borderRadius: professionalTheme.borderRadius.md,
-    backgroundColor: professionalTheme.colors.backgroundDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  arrowIcon: {
-    fontSize: 18,
-    color: professionalTheme.colors.textSecondary,
-    fontWeight: professionalTheme.typography.bold,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 80,
-  },
-  emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: professionalTheme.colors.backgroundDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: professionalTheme.spacing.xl,
-  },
-  emptyIconText: {
-    fontSize: 48,
+    paddingVertical: mobileTheme.spacing.xxxl,
+    paddingHorizontal: mobileTheme.spacing.xl,
   },
   emptyTitle: {
-    fontSize: professionalTheme.typography.h3,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.sm,
+    marginTop: mobileTheme.spacing.md,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h3,
+    fontWeight: mobileTheme.typography.semibold,
   },
   emptyText: {
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textSecondary,
+    marginTop: mobileTheme.spacing.xs,
     textAlign: 'center',
-    marginBottom: professionalTheme.spacing.xl,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
   },
-  emptyButton: {
-    backgroundColor: professionalTheme.colors.accent,
-    paddingHorizontal: professionalTheme.spacing.xxl,
-    paddingVertical: professionalTheme.spacing.lg,
-    borderRadius: professionalTheme.borderRadius.md,
-    ...professionalTheme.shadows.md,
+  primaryButton: {
+    marginTop: mobileTheme.spacing.lg,
+    backgroundColor: mobileTheme.colors.primary,
+    borderRadius: mobileTheme.radius.md,
+    paddingHorizontal: mobileTheme.spacing.xl,
+    paddingVertical: mobileTheme.spacing.md,
   },
-  emptyButtonText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textInverse,
+  primaryButtonText: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontWeight: mobileTheme.typography.semibold,
+    fontSize: mobileTheme.typography.small,
   },
-  // Modal Styles
   modalContainer: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.background,
+    backgroundColor: mobileTheme.colors.background,
   },
   modalHeader: {
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingVertical: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: professionalTheme.spacing.lg,
-    paddingVertical: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.surface,
-    ...professionalTheme.shadows.sm,
   },
-  modalCloseButton: {
+  iconButton: {
     width: 40,
     height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  modalCloseIcon: {
-    fontSize: 24,
-    color: professionalTheme.colors.textPrimary,
-    fontWeight: professionalTheme.typography.bold,
-  },
-  modalHeaderContent: {
-    flex: 1,
-    marginLeft: professionalTheme.spacing.sm,
+    backgroundColor: mobileTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    marginRight: mobileTheme.spacing.sm,
   },
   modalTitle: {
-    fontSize: professionalTheme.typography.h4,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-  },
-  modalSubtitle: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-    marginTop: professionalTheme.spacing.xs,
+    flex: 1,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h3,
+    fontWeight: mobileTheme.typography.semibold,
   },
   modalBody: {
-    flex: 1,
+    padding: mobileTheme.spacing.lg,
   },
-  documentPreview: {
-    padding: professionalTheme.spacing.lg,
-  },
-  imagePreview: {
-    width: '100%',
-    height: 400,
-    borderRadius: professionalTheme.borderRadius.lg,
-    backgroundColor: professionalTheme.colors.backgroundDark,
-  },
-  pdfPreview: {
+  previewCard: {
+    borderRadius: mobileTheme.radius.lg,
+    backgroundColor: mobileTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    minHeight: 280,
     alignItems: 'center',
-    padding: professionalTheme.spacing.xxl,
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  pdfIcon: {
-    fontSize: 64,
-    marginBottom: professionalTheme.spacing.lg,
+  previewImage: {
+    width: '100%',
+    height: 280,
+  },
+  pdfState: {
+    alignItems: 'center',
+    padding: mobileTheme.spacing.xl,
   },
   pdfText: {
-    fontSize: professionalTheme.typography.h3,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
-  },
-  pdfSubtext: {
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  placeholderPreview: {
-    alignItems: 'center',
-    padding: professionalTheme.spacing.xxl,
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
-  },
-  placeholderIcon: {
-    fontSize: 64,
-    marginBottom: professionalTheme.spacing.lg,
-  },
-  placeholderText: {
-    fontSize: professionalTheme.typography.h3,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
+    marginTop: mobileTheme.spacing.sm,
+    color: mobileTheme.colors.textSecondary,
   },
   infoCard: {
-    margin: professionalTheme.spacing.lg,
-    padding: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
-    ...professionalTheme.shadows.sm,
-  },
-  infoTitle: {
-    fontSize: professionalTheme.typography.h4,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.lg,
+    borderRadius: mobileTheme.radius.lg,
+    backgroundColor: mobileTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    paddingHorizontal: mobileTheme.spacing.md,
   },
   infoRow: {
+    paddingVertical: mobileTheme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: mobileTheme.colors.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: professionalTheme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: professionalTheme.colors.borderLight,
   },
   infoLabel: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textSecondary,
-    fontWeight: professionalTheme.typography.medium,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
   },
   infoValue: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textPrimary,
-    fontWeight: professionalTheme.typography.semibold,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
   modalActions: {
     flexDirection: 'row',
-    padding: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: professionalTheme.colors.borderLight,
-    gap: professionalTheme.spacing.md,
+    gap: mobileTheme.spacing.sm,
+    padding: mobileTheme.spacing.lg,
   },
-  actionButton: {
+  secondaryButton: {
     flex: 1,
+    borderRadius: mobileTheme.radius.md,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.accent,
-    borderRadius: professionalTheme.borderRadius.md,
-    ...professionalTheme.shadows.sm,
+    backgroundColor: mobileTheme.colors.surface,
+    paddingVertical: mobileTheme.spacing.md,
   },
-  actionButtonText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textInverse,
+  secondaryButtonText: {
+    color: mobileTheme.colors.textPrimary,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  actionButtonDanger: {
+  dangerButton: {
     flex: 1,
+    borderRadius: mobileTheme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: professionalTheme.colors.error,
+    backgroundColor: mobileTheme.colors.danger,
+    paddingVertical: mobileTheme.spacing.md,
   },
-  actionButtonTextDanger: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.error,
+  dangerButtonText: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontWeight: mobileTheme.typography.semibold,
   },
 });
 

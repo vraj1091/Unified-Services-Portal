@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,402 +7,259 @@ import {
   StyleSheet,
   SafeAreaView,
   TextInput,
-  StatusBar,
 } from 'react-native';
-import professionalTheme from '../../theme/professionalTheme';
+import { Ionicons } from '@expo/vector-icons';
+import mobileTheme from '../../theme/mobileTheme';
+
+const grants = [
+  { id: 'startup', title: 'Startup Gujarat Grant', description: 'Financial assistance for early-stage startups.', amount: 'Up to INR 10 Lakhs', eligibility: 'Startup under 2 years' },
+  { id: 'msme', title: 'MSME Development Grant', description: 'Support for registered MSME modernization projects.', amount: 'Up to INR 25 Lakhs', eligibility: 'Registered MSME' },
+  { id: 'export', title: 'Export Promotion Grant', description: 'Incentives for export readiness and market expansion.', amount: 'Up to INR 50 Lakhs', eligibility: 'Export-focused entities' },
+  { id: 'women', title: 'Women Entrepreneur Grant', description: 'Special support for women-led enterprises.', amount: 'Up to INR 15 Lakhs', eligibility: 'Women promoters' },
+  { id: 'tech', title: 'Technology Innovation Grant', description: 'Funding for innovative technology products.', amount: 'Up to INR 30 Lakhs', eligibility: 'Technology ventures' },
+];
 
 const GovernmentGrantsScreenPro = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [focusedInput, setFocusedInput] = useState(false);
 
-  const grants = [
-    {
-      id: 'startup',
-      title: 'Startup Gujarat Grant',
-      subtitle: 'स्टार्टअप गुजरात अनुदान',
-      description: 'Financial assistance for new startups',
-      amount: 'Up to ₹10 Lakhs',
-      eligibility: 'New startups < 2 years',
-      color: '#3B82F6',
-    },
-    {
-      id: 'msme',
-      title: 'MSME Development Grant',
-      subtitle: 'एमएसएमई विकास अनुदान',
-      description: 'Support for small & medium enterprises',
-      amount: 'Up to ₹25 Lakhs',
-      eligibility: 'Registered MSMEs',
-      color: '#8B5CF6',
-    },
-    {
-      id: 'export',
-      title: 'Export Promotion Grant',
-      subtitle: 'निर्यात प्रोत्साहन अनुदान',
-      description: 'Incentives for export businesses',
-      amount: 'Up to ₹50 Lakhs',
-      eligibility: 'Export businesses',
-      color: '#10B981',
-    },
-    {
-      id: 'women',
-      title: 'Women Entrepreneur Grant',
-      subtitle: 'महिला उद्यमी अनुदान',
-      description: 'Special grants for women-led businesses',
-      amount: 'Up to ₹15 Lakhs',
-      eligibility: 'Women entrepreneurs',
-      color: '#F59E0B',
-    },
-    {
-      id: 'tech',
-      title: 'Technology Innovation Grant',
-      subtitle: 'प्रौद्योगिकी नवाचार अनुदान',
-      description: 'Funding for tech innovation',
-      amount: 'Up to ₹30 Lakhs',
-      eligibility: 'Tech startups',
-      color: '#EF4444',
-    },
-  ];
+  const filteredGrants = useMemo(
+    () => grants.filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.description.toLowerCase().includes(searchQuery.toLowerCase())),
+    [searchQuery]
+  );
 
-  const stats = [
-    { label: 'Available', value: '50+', color: professionalTheme.colors.accent },
-    { label: 'Applied', value: '12', color: professionalTheme.colors.info },
-    { label: 'Approved', value: '5', color: professionalTheme.colors.success },
-  ];
+  const handleApply = (grant) => {
+    navigation.navigate('FinalForm', {
+      service: { id: grant.id, title: grant.title },
+      provider: { name: 'Government Grants Cell' },
+      documents: {},
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={professionalTheme.colors.background} />
-      
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.backIcon}>←</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
+        <View style={styles.headerBody}>
           <Text style={styles.headerTitle}>Government Grants</Text>
-          <Text style={styles.headerSubtitle}>सरकारी अनुदान</Text>
+          <Text style={styles.headerSubtitle}>Search and apply to active schemes</Text>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <View style={[
-            styles.searchInputContainer,
-            focusedInput && styles.searchInputContainerFocused
-          ]}>
-            <Text style={styles.searchIcon}>🔍</Text>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search grants..."
-              placeholderTextColor={professionalTheme.colors.textTertiary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onFocus={() => setFocusedInput(true)}
-              onBlur={() => setFocusedInput(false)}
-            />
-          </View>
+      <View style={styles.searchWrap}>
+        <Ionicons name="search-outline" size={18} color={mobileTheme.colors.textTertiary} />
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search grant schemes"
+          placeholderTextColor={mobileTheme.colors.textTertiary}
+          style={styles.searchInput}
+        />
+      </View>
+
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.statsRow}>
+          <Stat value="50+" label="Available" />
+          <Stat value="12" label="Applied" />
+          <Stat value="5" label="Approved" />
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          {stats.map((stat, index) => (
-            <View key={index} style={styles.statCard}>
-              <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
-        </View>
+        <View style={styles.list}>
+          {filteredGrants.map((grant) => (
+            <View key={grant.id} style={styles.card}>
+              <View style={styles.cardHead}>
+                <View style={styles.iconWrap}>
+                  <Ionicons name="cash-outline" size={18} color={mobileTheme.colors.primary} />
+                </View>
+                <View style={styles.cardBody}>
+                  <Text style={styles.cardTitle}>{grant.title}</Text>
+                  <Text style={styles.cardDescription}>{grant.description}</Text>
+                </View>
+              </View>
 
-        {/* Grants List */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Featured Grants</Text>
-          {grants.map((grant) => (
-            <View key={grant.id} style={styles.grantCard}>
-              <View style={styles.grantHeader}>
-                <View style={[styles.grantIcon, { backgroundColor: grant.color + '15' }]}>
-                  <Text style={styles.grantIconText}>💰</Text>
-                </View>
-                <View style={styles.grantInfo}>
-                  <Text style={styles.grantTitle}>{grant.title}</Text>
-                  <Text style={styles.grantSubtitle}>{grant.subtitle}</Text>
-                </View>
+              <View style={styles.metaRow}>
+                <Meta label="Grant Value" value={grant.amount} />
+                <Meta label="Eligibility" value={grant.eligibility} />
               </View>
-              
-              <Text style={styles.grantDescription}>{grant.description}</Text>
-              
-              <View style={styles.grantDetails}>
-                <View style={styles.grantDetail}>
-                  <Text style={styles.detailLabel}>Amount</Text>
-                  <Text style={[styles.detailValue, { color: grant.color }]}>
-                    {grant.amount}
-                  </Text>
-                </View>
-                <View style={styles.grantDetail}>
-                  <Text style={styles.detailLabel}>Eligibility</Text>
-                  <Text style={styles.detailValue}>{grant.eligibility}</Text>
-                </View>
-              </View>
-              
-              <TouchableOpacity
-                style={[styles.applyButton, { backgroundColor: grant.color }]}
-                activeOpacity={0.8}
-              >
+
+              <TouchableOpacity style={styles.applyButton} onPress={() => handleApply(grant)} activeOpacity={0.86}>
                 <Text style={styles.applyButtonText}>Apply Now</Text>
+                <Ionicons name="arrow-forward" size={14} color={mobileTheme.colors.textOnPrimary} />
               </TouchableOpacity>
             </View>
           ))}
         </View>
-
-        {/* Help Section */}
-        <View style={styles.section}>
-          <View style={styles.helpCard}>
-            <View style={styles.helpContent}>
-              <Text style={styles.helpIcon}>💡</Text>
-              <View style={styles.helpText}>
-                <Text style={styles.helpTitle}>Need Help?</Text>
-                <Text style={styles.helpSubtitle}>
-                  Our experts can help you find and apply for the right grants
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Support')}
-              style={styles.helpButton}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.helpButtonText}>Contact Support</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+const Stat = ({ value, label }) => (
+  <View style={styles.statCard}>
+    <Text style={styles.statValue}>{value}</Text>
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
+
+const Meta = ({ label, value }) => (
+  <View style={styles.metaBox}>
+    <Text style={styles.metaLabel}>{label}</Text>
+    <Text numberOfLines={2} style={styles.metaValue}>{value}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.background,
+    backgroundColor: mobileTheme.colors.background,
   },
   header: {
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingTop: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: professionalTheme.spacing.lg,
-    paddingVertical: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.surface,
-    ...professionalTheme.shadows.sm,
+    gap: mobileTheme.spacing.sm,
   },
-  backButton: {
+  iconButton: {
     width: 40,
     height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.primarySoft,
   },
-  backIcon: {
-    fontSize: 24,
-    color: professionalTheme.colors.textPrimary,
-    fontWeight: professionalTheme.typography.bold,
-  },
-  headerContent: {
+  headerBody: {
     flex: 1,
-    marginLeft: professionalTheme.spacing.sm,
   },
   headerTitle: {
-    fontSize: professionalTheme.typography.h4,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
   },
   headerSubtitle: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-    marginTop: professionalTheme.spacing.xs,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  searchContainer: {
-    paddingHorizontal: professionalTheme.spacing.lg,
-    paddingTop: professionalTheme.spacing.xl,
-  },
-  searchInputContainer: {
+  searchWrap: {
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.md,
+    borderRadius: mobileTheme.radius.md,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    paddingHorizontal: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: professionalTheme.colors.border,
-    paddingHorizontal: professionalTheme.spacing.lg,
-    height: 56,
-    ...professionalTheme.shadows.sm,
-  },
-  searchInputContainerFocused: {
-    borderColor: professionalTheme.colors.accent,
-  },
-  searchIcon: {
-    fontSize: 20,
-    marginRight: professionalTheme.spacing.md,
+    height: 48,
   },
   searchInput: {
     flex: 1,
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textPrimary,
-    height: '100%',
+    marginLeft: mobileTheme.spacing.sm,
+    color: mobileTheme.colors.textPrimary,
   },
-  statsContainer: {
+  scroll: {
+    flex: 1,
+  },
+  statsRow: {
     flexDirection: 'row',
-    paddingHorizontal: professionalTheme.spacing.lg,
-    paddingTop: professionalTheme.spacing.xl,
-    gap: professionalTheme.spacing.md,
+    gap: mobileTheme.spacing.sm,
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.lg,
   },
   statCard: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
-    padding: professionalTheme.spacing.lg,
+    borderRadius: mobileTheme.radius.lg,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
     alignItems: 'center',
-    ...professionalTheme.shadows.sm,
+    paddingVertical: mobileTheme.spacing.md,
   },
   statValue: {
-    fontSize: professionalTheme.typography.h2,
-    fontWeight: professionalTheme.typography.bold,
-    marginBottom: professionalTheme.spacing.xs,
+    color: mobileTheme.colors.primary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
   },
   statLabel: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-    fontWeight: professionalTheme.typography.medium,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  section: {
-    paddingHorizontal: professionalTheme.spacing.lg,
-    marginTop: professionalTheme.spacing.xl,
+  list: {
+    padding: mobileTheme.spacing.lg,
   },
-  sectionTitle: {
-    fontSize: professionalTheme.typography.h4,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.lg,
+  card: {
+    borderRadius: mobileTheme.radius.lg,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.md,
+    ...mobileTheme.shadows.sm,
   },
-  grantCard: {
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
-    padding: professionalTheme.spacing.lg,
-    marginBottom: professionalTheme.spacing.lg,
-    ...professionalTheme.shadows.md,
-  },
-  grantHeader: {
+  cardHead: {
     flexDirection: 'row',
-    marginBottom: professionalTheme.spacing.md,
   },
-  grantIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: professionalTheme.borderRadius.md,
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: professionalTheme.spacing.md,
+    backgroundColor: mobileTheme.colors.primarySoft,
+    marginRight: mobileTheme.spacing.md,
   },
-  grantIconText: {
-    fontSize: 28,
-  },
-  grantInfo: {
+  cardBody: {
     flex: 1,
-    justifyContent: 'center',
   },
-  grantTitle: {
-    fontSize: professionalTheme.typography.h5,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
+  cardTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  grantSubtitle: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
+  cardDescription: {
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
+    lineHeight: 18,
   },
-  grantDescription: {
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textSecondary,
-    marginBottom: professionalTheme.spacing.lg,
-    lineHeight: 22,
-  },
-  grantDetails: {
+  metaRow: {
+    marginTop: mobileTheme.spacing.md,
     flexDirection: 'row',
-    marginBottom: professionalTheme.spacing.lg,
-    gap: professionalTheme.spacing.md,
+    gap: mobileTheme.spacing.sm,
   },
-  grantDetail: {
+  metaBox: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.backgroundDark,
-    borderRadius: professionalTheme.borderRadius.md,
-    padding: professionalTheme.spacing.md,
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.surfaceMuted,
+    padding: mobileTheme.spacing.sm,
   },
-  detailLabel: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-    marginBottom: professionalTheme.spacing.xs,
-    fontWeight: professionalTheme.typography.medium,
+  metaLabel: {
+    color: mobileTheme.colors.textTertiary,
+    fontSize: 11,
   },
-  detailValue: {
-    fontSize: professionalTheme.typography.bodySmall,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textPrimary,
+  metaValue: {
+    marginTop: 2,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.caption,
+    fontWeight: mobileTheme.typography.semibold,
   },
   applyButton: {
-    backgroundColor: professionalTheme.colors.accent,
-    borderRadius: professionalTheme.borderRadius.md,
-    paddingVertical: professionalTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.md,
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.primary,
+    minHeight: 42,
     alignItems: 'center',
-    ...professionalTheme.shadows.sm,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: mobileTheme.spacing.xs,
   },
   applyButtonText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textInverse,
-  },
-  helpCard: {
-    backgroundColor: professionalTheme.colors.infoBg,
-    borderRadius: professionalTheme.borderRadius.lg,
-    padding: professionalTheme.spacing.xl,
-    borderWidth: 1,
-    borderColor: professionalTheme.colors.info + '30',
-  },
-  helpContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: professionalTheme.spacing.lg,
-  },
-  helpIcon: {
-    fontSize: 40,
-    marginRight: professionalTheme.spacing.md,
-  },
-  helpText: {
-    flex: 1,
-  },
-  helpTitle: {
-    fontSize: professionalTheme.typography.h5,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
-  },
-  helpSubtitle: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textSecondary,
-    lineHeight: 20,
-  },
-  helpButton: {
-    backgroundColor: professionalTheme.colors.accent,
-    borderRadius: professionalTheme.borderRadius.md,
-    paddingVertical: professionalTheme.spacing.lg,
-    alignItems: 'center',
-    ...professionalTheme.shadows.sm,
-  },
-  helpButtonText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textInverse,
+    color: mobileTheme.colors.textOnPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
 });
 

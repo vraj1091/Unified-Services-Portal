@@ -7,78 +7,76 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import { colors, spacing, typography, borderRadius } from '../../theme/colors';
+import { Ionicons } from '@expo/vector-icons';
+import mobileTheme from '../../theme/mobileTheme';
 
 const UtilityServicesScreen = ({ navigation }) => {
   const services = [
     {
       id: 'electricity',
       title: 'Electricity Connection',
-      description: 'New connection, transfer, or upgrade',
+      description: 'New connection, transfer, or load upgrade.',
+      icon: 'flash-outline',
     },
     {
       id: 'gas',
       title: 'Gas Connection',
-      description: 'Piped gas connection services',
+      description: 'Piped gas service for home and business.',
+      icon: 'flame-outline',
     },
     {
       id: 'water',
       title: 'Water Connection',
-      description: 'Municipal water supply connection',
+      description: 'Municipal and local authority supply setup.',
+      icon: 'water-outline',
     },
     {
       id: 'property',
-      title: 'Property Tax',
-      description: 'Property tax payment and services',
+      title: 'Property Services',
+      description: 'Property utility links and tax service support.',
+      icon: 'home-outline',
     },
   ];
 
-  const handleServiceSelect = (service) => {
-    navigation.navigate('ServiceProviders', { service });
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Utility Services</Text>
-          <Text style={styles.subtitle}>Select a service to continue</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
+        </TouchableOpacity>
+        <View>
+          <Text style={styles.headerTitle}>Utility Services</Text>
+          <Text style={styles.headerSubtitle}>Choose service type to continue</Text>
         </View>
+      </View>
 
-        {/* Services List */}
-        <View style={styles.content}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
           {services.map((service) => (
             <TouchableOpacity
               key={service.id}
-              onPress={() => handleServiceSelect(service)}
               style={styles.serviceCard}
-              activeOpacity={0.7}
+              activeOpacity={0.86}
+              onPress={() => navigation.navigate('ServiceProviders', { service })}
             >
-              <View style={styles.serviceContent}>
+              <View style={styles.serviceIconWrap}>
+                <Ionicons name={service.icon} size={20} color={mobileTheme.colors.primary} />
+              </View>
+              <View style={styles.serviceBody}>
                 <Text style={styles.serviceTitle}>{service.title}</Text>
                 <Text style={styles.serviceDescription}>{service.description}</Text>
               </View>
-              <Text style={styles.serviceArrow}>→</Text>
+              <Ionicons name="chevron-forward" size={16} color={mobileTheme.colors.textTertiary} />
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Info */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>How it works</Text>
-          <Text style={styles.infoText}>
-            1. Select a service{'\n'}
-            2. Choose your provider{'\n'}
-            3. Upload documents{'\n'}
-            4. Submit application
-          </Text>
+        <View style={styles.stepCard}>
+          <Text style={styles.stepTitle}>How This Works</Text>
+          <Text style={styles.stepText}>1. Select service</Text>
+          <Text style={styles.stepText}>2. Pick your provider</Text>
+          <Text style={styles.stepText}>3. Upload required documents</Text>
+          <Text style={styles.stepText}>4. Submit final application</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -88,84 +86,94 @@ const UtilityServicesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neutral.bg,
+    backgroundColor: mobileTheme.colors.background,
   },
   header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingTop: mobileTheme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: mobileTheme.spacing.sm,
   },
-  backButton: {
-    marginBottom: spacing.md,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.primarySoft,
   },
-  backText: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.primary.main,
+  headerTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
   },
-  title: {
-    fontSize: typography.h2,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
+  headerSubtitle: {
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  subtitle: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
+  scroll: {
+    flex: 1,
   },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+  section: {
+    marginTop: mobileTheme.spacing.lg,
+    paddingHorizontal: mobileTheme.spacing.lg,
   },
   serviceCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    borderRadius: mobileTheme.radius.lg,
     borderWidth: 1,
-    borderColor: colors.neutral.border,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.sm,
+    ...mobileTheme.shadows.sm,
   },
-  serviceContent: {
+  serviceIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.primarySoft,
+    marginRight: mobileTheme.spacing.md,
+  },
+  serviceBody: {
     flex: 1,
   },
   serviceTitle: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
   serviceDescription: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
+    lineHeight: 16,
   },
-  serviceArrow: {
-    fontSize: typography.h3,
-    color: colors.primary.main,
-    fontWeight: typography.bold,
-  },
-  infoCard: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-    backgroundColor: colors.primary.bg,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+  stepCard: {
+    marginTop: mobileTheme.spacing.lg,
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginBottom: mobileTheme.spacing.xxxl,
+    borderRadius: mobileTheme.radius.lg,
     borderWidth: 1,
-    borderColor: colors.primary.light,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.lg,
   },
-  infoTitle: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.primary.main,
-    marginBottom: spacing.sm,
+  stepTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h3,
+    fontWeight: mobileTheme.typography.semibold,
+    marginBottom: mobileTheme.spacing.sm,
   },
-  infoText: {
-    fontSize: typography.small,
-    color: colors.primary.dark,
-    lineHeight: 20,
+  stepText: {
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
+    marginBottom: 4,
   },
 });
 

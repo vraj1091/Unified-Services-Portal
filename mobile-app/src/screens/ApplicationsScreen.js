@@ -23,7 +23,7 @@ const ApplicationsScreen = ({ navigation }) => {
 
   const fetchApplications = async () => {
     try {
-      const response = await api.get('/applications/');
+      const response = await api.get('/api/applications/');
       setApplications(response.data || []);
     } catch (error) {
       console.error('Failed to fetch applications:', error);

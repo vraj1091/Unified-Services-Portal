@@ -9,164 +9,99 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StatusBar,
+  Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import professionalTheme from '../../theme/professionalTheme';
+import mobileTheme from '../../theme/mobileTheme';
 
 const LoginScreenPro = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [focusedField, setFocusedField] = useState(null);
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
-      if (Platform.OS === 'web') {
-        alert('Please enter email and password');
-      }
+      Alert.alert('Required', 'Please enter email and password.');
       return;
     }
-    
-    console.log('Login button clicked');
+
+    setLoading(true);
     const result = await login(email, password);
-    
+    setLoading(false);
+
     if (!result.success) {
-      if (Platform.OS === 'web') {
-        alert(result.message || 'Login failed');
-      }
+      Alert.alert('Login Failed', result.message || 'Please try again.');
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={professionalTheme.colors.background} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Logo Section */}
-          <View style={styles.logoSection}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>GS</Text>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <LinearGradient colors={['#214CC8', '#173A9F']} style={styles.hero}>
+            <View style={styles.logoWrap}>
+              <Ionicons name="shield-checkmark" size={28} color={mobileTheme.colors.textOnPrimary} />
             </View>
-            <Text style={styles.appName}>Gujarat Services</Text>
-            <Text style={styles.tagline}>Your gateway to government services</Text>
-          </View>
+            <Text style={styles.heroTitle}>Gujarat Services Portal</Text>
+            <Text style={styles.heroSubtitle}>Secure digital access to state government services</Text>
+          </LinearGradient>
 
-          {/* Form Section */}
-          <View style={styles.formSection}>
-            <Text style={styles.welcomeText}>Welcome back</Text>
-            <Text style={styles.subtitleText}>Sign in to continue</Text>
+          <View style={styles.card}>
+            <Text style={styles.title}>Sign In</Text>
+            <Text style={styles.subtitle}>Enter credentials to continue</Text>
 
-            {/* Email Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email address</Text>
-              <View style={[
-                styles.inputContainer,
-                focusedField === 'email' && styles.inputContainerFocused
-              ]}>
-                <Text style={styles.inputIcon}>✉</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="you@example.com"
-                  placeholderTextColor={professionalTheme.colors.textTertiary}
-                  value={email}
-                  onChangeText={setEmail}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
+            <View style={styles.inputWrap}>
+              <Ionicons name="mail-outline" size={18} color={mobileTheme.colors.textTertiary} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email address"
+                placeholderTextColor={mobileTheme.colors.textTertiary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputWrap}>
+              <Ionicons name="lock-closed-outline" size={18} color={mobileTheme.colors.textTertiary} />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={mobileTheme.colors.textTertiary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)} activeOpacity={0.8}>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={mobileTheme.colors.textTertiary}
                 />
-              </View>
+              </TouchableOpacity>
             </View>
 
-            {/* Password Input */}
-            <View style={styles.inputGroup}>
-              <View style={styles.labelRow}>
-                <Text style={styles.label}>Password</Text>
-                <TouchableOpacity>
-                  <Text style={styles.forgotText}>Forgot?</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={[
-                styles.inputContainer,
-                focusedField === 'password' && styles.inputContainerFocused
-              ]}>
-                <Text style={styles.inputIcon}>🔒</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your password"
-                  placeholderTextColor={professionalTheme.colors.textTertiary}
-                  value={password}
-                  onChangeText={setPassword}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeButton}
-                >
-                  <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Login Button */}
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleLogin}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.loginButtonText}>Sign in</Text>
+            <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} activeOpacity={0.88} disabled={loading}>
+              <Text style={styles.primaryButtonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
             </TouchableOpacity>
 
-            {/* Divider */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Social Login */}
-            <View style={styles.socialButtons}>
-              <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
-                <Text style={styles.socialIcon}>G</Text>
-                <Text style={styles.socialText}>Google</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
-                <Text style={styles.socialIcon}>📱</Text>
-                <Text style={styles.socialText}>Phone</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Sign Up Link */}
-            <View style={styles.signupSection}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
+            <View style={styles.footerRow}>
+              <Text style={styles.footerText}>No account yet?</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.signupLink}>Sign up</Text>
+                <Text style={styles.footerLink}> Create account</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              By continuing, you agree to our{' '}
-              <Text style={styles.footerLink}>Terms</Text> and{' '}
-              <Text style={styles.footerLink}>Privacy Policy</Text>
-            </Text>
-          </View>
+          <Text style={styles.bottomText}>Government of Gujarat | Encrypted session</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -176,189 +111,110 @@ const LoginScreenPro = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.background,
-  },
-  keyboardView: {
-    flex: 1,
+    backgroundColor: mobileTheme.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: professionalTheme.spacing.xl,
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingBottom: mobileTheme.spacing.xxl,
   },
-  logoSection: {
-    alignItems: 'center',
-    paddingTop: professionalTheme.spacing.xxxl * 2,
-    paddingBottom: professionalTheme.spacing.xxxl,
+  hero: {
+    marginTop: mobileTheme.spacing.md,
+    borderRadius: mobileTheme.radius.xl,
+    padding: mobileTheme.spacing.xl,
   },
-  logoContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    backgroundColor: professionalTheme.colors.accent,
+  logoWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: professionalTheme.spacing.lg,
-    ...professionalTheme.shadows.md,
+    marginBottom: mobileTheme.spacing.lg,
   },
-  logoText: {
-    fontSize: 32,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textInverse,
+  heroTitle: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
   },
-  appName: {
-    fontSize: professionalTheme.typography.h3,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
+  heroSubtitle: {
+    marginTop: mobileTheme.spacing.sm,
+    color: '#E5ECFF',
+    fontSize: mobileTheme.typography.small,
+    lineHeight: 20,
   },
-  tagline: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textSecondary,
+  card: {
+    marginTop: -18,
+    backgroundColor: mobileTheme.colors.surface,
+    borderRadius: mobileTheme.radius.xl,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    padding: mobileTheme.spacing.xl,
+    ...mobileTheme.shadows.md,
   },
-  formSection: {
-    flex: 1,
+  title: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
   },
-  welcomeText: {
-    fontSize: professionalTheme.typography.h2,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
+  subtitle: {
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
+    marginTop: 4,
+    marginBottom: mobileTheme.spacing.lg,
   },
-  subtitleText: {
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textSecondary,
-    marginBottom: professionalTheme.spacing.xxl,
-  },
-  inputGroup: {
-    marginBottom: professionalTheme.spacing.xl,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: professionalTheme.spacing.sm,
-  },
-  label: {
-    fontSize: professionalTheme.typography.bodySmall,
-    fontWeight: professionalTheme.typography.medium,
-    color: professionalTheme.colors.textPrimary,
-  },
-  forgotText: {
-    fontSize: professionalTheme.typography.bodySmall,
-    fontWeight: professionalTheme.typography.medium,
-    color: professionalTheme.colors.accent,
-  },
-  inputContainer: {
+  inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: professionalTheme.colors.border,
-    paddingHorizontal: professionalTheme.spacing.lg,
-    height: 56,
-  },
-  inputContainerFocused: {
-    borderColor: professionalTheme.colors.accent,
-    ...professionalTheme.shadows.sm,
-  },
-  inputIcon: {
-    fontSize: 20,
-    marginRight: professionalTheme.spacing.md,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    borderRadius: mobileTheme.radius.md,
+    paddingHorizontal: mobileTheme.spacing.md,
+    backgroundColor: mobileTheme.colors.surfaceMuted,
+    marginBottom: mobileTheme.spacing.md,
+    height: 52,
   },
   input: {
     flex: 1,
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textPrimary,
     height: '100%',
+    marginLeft: mobileTheme.spacing.sm,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.body,
   },
-  eyeButton: {
-    padding: professionalTheme.spacing.sm,
-  },
-  eyeIcon: {
-    fontSize: 20,
-  },
-  loginButton: {
-    backgroundColor: professionalTheme.colors.accent,
-    borderRadius: professionalTheme.borderRadius.md,
-    height: 56,
+  primaryButton: {
+    marginTop: mobileTheme.spacing.sm,
+    height: 52,
+    borderRadius: mobileTheme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: professionalTheme.spacing.md,
-    ...professionalTheme.shadows.md,
+    backgroundColor: mobileTheme.colors.primary,
+    ...mobileTheme.shadows.sm,
   },
-  loginButtonText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textInverse,
+  primaryButtonText: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontSize: mobileTheme.typography.body,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: professionalTheme.spacing.xxl,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: professionalTheme.colors.border,
-  },
-  dividerText: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textTertiary,
-    marginHorizontal: professionalTheme.spacing.lg,
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    gap: professionalTheme.spacing.md,
-  },
-  socialButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: professionalTheme.colors.border,
-    height: 56,
-    gap: professionalTheme.spacing.sm,
-  },
-  socialIcon: {
-    fontSize: 20,
-  },
-  socialText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.medium,
-    color: professionalTheme.colors.textPrimary,
-  },
-  signupSection: {
+  footerRow: {
+    marginTop: mobileTheme.spacing.lg,
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: professionalTheme.spacing.xxl,
-  },
-  signupText: {
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textSecondary,
-  },
-  signupLink: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.accent,
-  },
-  footer: {
-    paddingVertical: professionalTheme.spacing.xxl,
     alignItems: 'center',
   },
   footerText: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 18,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
   },
   footerLink: {
-    color: professionalTheme.colors.accent,
-    fontWeight: professionalTheme.typography.medium,
+    color: mobileTheme.colors.primary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
+  },
+  bottomText: {
+    marginTop: mobileTheme.spacing.lg,
+    textAlign: 'center',
+    color: mobileTheme.colors.textTertiary,
+    fontSize: mobileTheme.typography.caption,
   },
 });
 

@@ -8,164 +8,96 @@ import {
   SafeAreaView,
   Linking,
 } from 'react-native';
-import { colors, spacing, typography, borderRadius, shadows } from '../theme/colors';
+import { Ionicons } from '@expo/vector-icons';
+import mobileTheme from '../theme/mobileTheme';
 
 const SupportScreen = ({ navigation }) => {
   const [expandedFaq, setExpandedFaq] = useState(null);
 
   const contactMethods = [
-    {
-      title: 'Call Us',
-      subtitle: '+91 79 1234 5678',
-      action: () => Linking.openURL('tel:+917912345678'),
-    },
-    {
-      title: 'Email Us',
-      subtitle: 'support@gujaratportal.gov.in',
-      action: () => Linking.openURL('mailto:support@gujaratportal.gov.in'),
-    },
-    {
-      title: 'Live Chat',
-      subtitle: 'Chat with our team',
-      action: () => {},
-    },
+    { title: 'Call Support', subtitle: '+91 79 1234 5678', icon: 'call-outline', action: () => Linking.openURL('tel:+917912345678') },
+    { title: 'Email Support', subtitle: 'support@gujaratportal.gov.in', icon: 'mail-outline', action: () => Linking.openURL('mailto:support@gujaratportal.gov.in') },
+    { title: 'Live Chat', subtitle: 'Average response in 5 minutes', icon: 'chatbubbles-outline', action: () => {} },
   ];
 
   const faqs = [
     {
-      question: 'How do I apply for a new electricity connection?',
-      answer: 'Go to Utility Services → Select Electricity → Choose your provider → Upload required documents → Fill the form → Submit application.',
+      question: 'How do I apply for utility services?',
+      answer: 'From Home, choose Utility Services, select provider, upload required documents, then submit your form.',
     },
     {
-      question: 'What documents are required for name change?',
-      answer: 'You need: 1) Identity Proof (Aadhaar/PAN), 2) Address Proof (Utility Bill/Ration Card), 3) Name Change Proof (Marriage Certificate/Gazette/Affidavit).',
+      question: 'Where can I track my application status?',
+      answer: 'Open the Applications tab to view all submitted requests and their real-time status.',
     },
     {
-      question: 'How long does application processing take?',
-      answer: 'Processing time varies by service: Utility services: 7-15 days, Company formation: 15-30 days, Government grants: 30-60 days.',
+      question: 'Can I reuse uploaded documents?',
+      answer: 'Yes. In the document upload flow, you can pick from previously uploaded files in your document vault.',
     },
     {
-      question: 'Can I track my application status?',
-      answer: 'Yes! Go to Dashboard → My Applications to view all your applications and their current status.',
+      question: 'How secure is my account data?',
+      answer: 'All account sessions are secured and sensitive user information is handled under government data protection standards.',
     },
-    {
-      question: 'How do I upload documents?',
-      answer: 'During application, you can upload documents by taking a photo or selecting from gallery. Our AI will automatically extract information.',
-    },
-    {
-      question: 'Is my data secure?',
-      answer: 'Yes, all your data is encrypted and stored securely. We follow government security standards and never share your information.',
-    },
-  ];
-
-  const helpTopics = [
-    { title: 'Getting Started', desc: 'Learn the basics' },
-    { title: 'Video Tutorials', desc: 'Watch how-to videos' },
-    { title: 'User Guide', desc: 'Complete documentation' },
-    { title: 'Tips & Tricks', desc: 'Pro tips for faster processing' },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backIcon}>←</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Support & Help</Text>
-          <Text style={styles.headerSubtitle}>We're here to help you</Text>
+        <View>
+          <Text style={styles.headerTitle}>Support Center</Text>
+          <Text style={styles.headerSubtitle}>Help for services and applications</Text>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Contact Methods */}
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Us</Text>
-          {contactMethods.map((method, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={method.action}
-              activeOpacity={0.7}
-              style={styles.contactCard}
-            >
-              <View style={styles.contactInitial}>
-                <Text style={styles.contactInitialText}>
-                  {method.title.charAt(0)}
-                </Text>
+          <Text style={styles.sectionTitle}>Contact Channels</Text>
+          {contactMethods.map((method) => (
+            <TouchableOpacity key={method.title} style={styles.contactCard} onPress={method.action} activeOpacity={0.85}>
+              <View style={styles.contactIconWrap}>
+                <Ionicons name={method.icon} size={18} color={mobileTheme.colors.primary} />
               </View>
               <View style={styles.contactContent}>
                 <Text style={styles.contactTitle}>{method.title}</Text>
                 <Text style={styles.contactSubtitle}>{method.subtitle}</Text>
               </View>
-              <View style={styles.contactArrow}>
-                <Text style={styles.arrowIcon}>→</Text>
-              </View>
+              <Ionicons name="chevron-forward" size={16} color={mobileTheme.colors.textTertiary} />
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* FAQs */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
           {faqs.map((faq, index) => (
             <TouchableOpacity
-              key={index}
-              onPress={() => setExpandedFaq(expandedFaq === index ? null : index)}
+              key={faq.question}
               style={styles.faqCard}
-              activeOpacity={0.7}
+              onPress={() => setExpandedFaq(expandedFaq === index ? null : index)}
+              activeOpacity={0.85}
             >
-              <View style={styles.faqHeader}>
+              <View style={styles.faqHead}>
                 <Text style={styles.faqQuestion}>{faq.question}</Text>
-                <Text style={styles.faqToggle}>
-                  {expandedFaq === index ? '−' : '+'}
-                </Text>
+                <Ionicons
+                  name={expandedFaq === index ? 'remove-circle-outline' : 'add-circle-outline'}
+                  size={18}
+                  color={mobileTheme.colors.primary}
+                />
               </View>
-              {expandedFaq === index && (
-                <View style={styles.faqAnswer}>
-                  <Text style={styles.faqAnswerText}>{faq.answer}</Text>
-                </View>
-              )}
+              {expandedFaq === index ? <Text style={styles.faqAnswer}>{faq.answer}</Text> : null}
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Help Topics */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Help Topics</Text>
-          <View style={styles.topicsGrid}>
-            {helpTopics.map((topic, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.topicCard}
-                activeOpacity={0.7}
-              >
-                <View style={styles.topicInitial}>
-                  <Text style={styles.topicInitialText}>
-                    {topic.title.charAt(0)}
-                  </Text>
-                </View>
-                <Text style={styles.topicTitle}>{topic.title}</Text>
-                <Text style={styles.topicDesc}>{topic.desc}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Working Hours */}
         <View style={styles.section}>
           <View style={styles.hoursCard}>
             <Text style={styles.hoursTitle}>Support Hours</Text>
-            <Text style={styles.hoursText}>Monday - Friday: 9:00 AM - 6:00 PM</Text>
-            <Text style={styles.hoursText}>Saturday: 9:00 AM - 1:00 PM</Text>
+            <Text style={styles.hoursText}>Monday to Friday: 9:00 AM to 6:00 PM</Text>
+            <Text style={styles.hoursText}>Saturday: 9:00 AM to 1:00 PM</Text>
             <Text style={styles.hoursText}>Sunday: Closed</Text>
           </View>
         </View>
-
-        <View style={{ height: spacing.xxl }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -174,195 +106,124 @@ const SupportScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neutral.bg,
+    backgroundColor: mobileTheme.colors.background,
   },
   header: {
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingTop: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.neutral.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral.border,
+    gap: mobileTheme.spacing.sm,
   },
-  backButton: {
-    marginRight: spacing.sm,
-  },
-  backIcon: {
-    fontSize: typography.h2,
-    color: colors.text.primary,
-  },
-  headerContent: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: typography.h3,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-  },
-  headerSubtitle: {
-    fontSize: typography.tiny,
-    color: colors.text.secondary,
-    marginTop: spacing.xs,
-  },
-  section: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: typography.h4,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
-  },
-  contactCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
-    ...shadows.sm,
-  },
-  contactInitial: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.primary.main,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
+    backgroundColor: mobileTheme.colors.primarySoft,
   },
-  contactInitialText: {
-    fontSize: typography.h3,
-    fontWeight: typography.bold,
-    color: colors.text.inverse,
+  headerTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
+  },
+  headerSubtitle: {
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
+  },
+  scroll: {
+    flex: 1,
+  },
+  section: {
+    marginTop: mobileTheme.spacing.lg,
+    paddingHorizontal: mobileTheme.spacing.lg,
+  },
+  sectionTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h3,
+    fontWeight: mobileTheme.typography.bold,
+    marginBottom: mobileTheme.spacing.md,
+  },
+  contactCard: {
+    borderRadius: mobileTheme.radius.lg,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...mobileTheme.shadows.sm,
+  },
+  contactIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.primarySoft,
+    marginRight: mobileTheme.spacing.md,
   },
   contactContent: {
     flex: 1,
   },
   contactTitle: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
   contactSubtitle: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
-  },
-  contactArrow: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.neutral.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  arrowIcon: {
-    fontSize: typography.h4,
-    color: colors.primary.main,
-    fontWeight: typography.bold,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
   faqCard: {
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
+    borderRadius: mobileTheme.radius.lg,
     borderWidth: 1,
-    borderColor: colors.neutral.border,
-    ...shadows.sm,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.sm,
   },
-  faqHeader: {
+  faqHead: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: mobileTheme.spacing.sm,
   },
   faqQuestion: {
     flex: 1,
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
     lineHeight: 20,
-  },
-  faqToggle: {
-    fontSize: typography.h2,
-    fontWeight: typography.bold,
-    color: colors.primary.main,
-    marginLeft: spacing.sm,
   },
   faqAnswer: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.neutral.border,
-  },
-  faqAnswerText: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
+    marginTop: mobileTheme.spacing.sm,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
     lineHeight: 20,
   },
-  topicsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -spacing.xs,
-  },
-  topicCard: {
-    width: '48%',
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    margin: spacing.xs,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
-    ...shadows.sm,
-  },
-  topicInitial: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.primary.main,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  topicInitialText: {
-    fontSize: typography.h3,
-    fontWeight: typography.bold,
-    color: colors.text.inverse,
-  },
-  topicTitle: {
-    fontSize: typography.small,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-    textAlign: 'center',
-  },
-  topicDesc: {
-    fontSize: typography.tiny,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
   hoursCard: {
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
+    borderRadius: mobileTheme.radius.lg,
     borderWidth: 1,
-    borderColor: colors.neutral.border,
-    ...shadows.sm,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.lg,
+    marginBottom: mobileTheme.spacing.xxxl,
   },
   hoursTitle: {
-    fontSize: typography.h4,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h3,
+    fontWeight: mobileTheme.typography.semibold,
+    marginBottom: mobileTheme.spacing.sm,
   },
   hoursText: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
-    marginBottom: spacing.xs,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
+    marginBottom: 4,
   },
 });
 

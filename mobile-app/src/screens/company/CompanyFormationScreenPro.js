@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,445 +6,209 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  StatusBar,
 } from 'react-native';
-import professionalTheme from '../../theme/professionalTheme';
+import { Ionicons } from '@expo/vector-icons';
+import mobileTheme from '../../theme/mobileTheme';
+
+const services = [
+  { id: 'gst', title: 'GST Registration', description: 'Goods and Services Tax account activation', duration: '7-10 days', fee: 'INR 2,999', icon: 'receipt-outline' },
+  { id: 'pan', title: 'PAN Registration', description: 'Business PAN issuance and setup', duration: '5-7 days', fee: 'INR 499', icon: 'card-outline' },
+  { id: 'tan', title: 'TAN Registration', description: 'Tax Deduction Account Number setup', duration: '7-10 days', fee: 'INR 1,499', icon: 'document-lock-outline' },
+  { id: 'company', title: 'Company Incorporation', description: 'Private Limited, LLP, OPC incorporation', duration: '15-20 days', fee: 'INR 9,999', icon: 'business-outline' },
+  { id: 'trademark', title: 'Trademark Filing', description: 'Brand identity protection filing', duration: '12-18 months', fee: 'INR 6,999', icon: 'ribbon-outline' },
+];
 
 const CompanyFormationScreenPro = ({ navigation }) => {
-  const [selectedService, setSelectedService] = useState(null);
-
-  const services = [
-    {
-      id: 'gst',
-      title: 'GST Registration',
-      subtitle: 'जीएसटी पंजीकरण',
-      description: 'Register for Goods and Services Tax',
-      duration: '7-10 days',
-      fee: '₹2,999',
-      icon: '📋',
-      color: '#3B82F6',
-    },
-    {
-      id: 'pan',
-      title: 'PAN Card',
-      subtitle: 'पैन कार्ड',
-      description: 'Permanent Account Number',
-      duration: '5-7 days',
-      fee: '₹499',
-      icon: '💳',
-      color: '#8B5CF6',
-    },
-    {
-      id: 'tan',
-      title: 'TAN Registration',
-      subtitle: 'टैन पंजीकरण',
-      description: 'Tax Deduction Account Number',
-      duration: '7-10 days',
-      fee: '₹1,499',
-      icon: '🏦',
-      color: '#10B981',
-    },
-    {
-      id: 'company',
-      title: 'Company Registration',
-      subtitle: 'कंपनी पंजीकरण',
-      description: 'Private Limited, LLP, OPC',
-      duration: '15-20 days',
-      fee: '₹9,999',
-      icon: '🏢',
-      color: '#F59E0B',
-    },
-    {
-      id: 'trademark',
-      title: 'Trademark Registration',
-      subtitle: 'ट्रेडमार्क पंजीकरण',
-      description: 'Protect your brand identity',
-      duration: '12-18 months',
-      fee: '₹6,999',
-      icon: '®️',
-      color: '#EF4444',
-    },
-    {
-      id: 'msme',
-      title: 'MSME Registration',
-      subtitle: 'एमएसएमई पंजीकरण',
-      description: 'Udyam Registration Certificate',
-      duration: '1-2 days',
-      fee: '₹999',
-      icon: '🏭',
-      color: '#06B6D4',
-    },
-  ];
-
-  const features = [
-    { title: 'Fast Processing', desc: 'Quick turnaround time', icon: '⚡' },
-    { title: 'Secure', desc: 'Data protection', icon: '🔒' },
-    { title: 'Affordable', desc: 'Best prices', icon: '💰' },
-    { title: 'Support', desc: '24/7 assistance', icon: '💬' },
-  ];
-
   const handleApply = (service) => {
-    console.log('Applying for:', service.title);
-    setSelectedService(service);
-    // Navigate to application form or show modal
+    navigation.navigate('FinalForm', {
+      service: { id: service.id, title: service.title },
+      provider: { name: 'Business Facilitation Desk' },
+      documents: {},
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={professionalTheme.colors.background} />
-      
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.backIcon}>←</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Business Registration</Text>
-          <Text style={styles.headerSubtitle}>व्यवसाय पंजीकरण</Text>
+        <View style={styles.headerBody}>
+          <Text style={styles.headerTitle}>Company Formation</Text>
+          <Text style={styles.headerSubtitle}>Professional registration services</Text>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Info Banner */}
-        <View style={styles.infoBanner}>
-          <View style={styles.bannerIcon}>
-            <Text style={styles.bannerIconText}>✨</Text>
-          </View>
-          <View style={styles.bannerContent}>
-            <Text style={styles.bannerTitle}>Quick & Easy Process</Text>
-            <Text style={styles.bannerText}>
-              Complete registration online with minimal documentation
-            </Text>
-          </View>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.banner}>
+          <Ionicons name="sparkles-outline" size={22} color={mobileTheme.colors.primary} />
+          <Text style={styles.bannerText}>End-to-end guided registration with compliance-ready workflows.</Text>
         </View>
 
-        {/* Services */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Available Services</Text>
+        <View style={styles.list}>
           {services.map((service) => (
-            <View key={service.id} style={styles.serviceCard}>
-              <View style={styles.serviceHeader}>
-                <View style={[styles.serviceIcon, { backgroundColor: service.color + '15' }]}>
-                  <Text style={styles.serviceIconText}>{service.icon}</Text>
+            <View key={service.id} style={styles.card}>
+              <View style={styles.cardHead}>
+                <View style={styles.iconWrap}>
+                  <Ionicons name={service.icon} size={18} color={mobileTheme.colors.primary} />
                 </View>
-                <View style={styles.serviceInfo}>
-                  <Text style={styles.serviceTitle}>{service.title}</Text>
-                  <Text style={styles.serviceSubtitle}>{service.subtitle}</Text>
-                </View>
-              </View>
-              
-              <Text style={styles.serviceDescription}>{service.description}</Text>
-              
-              <View style={styles.serviceDetails}>
-                <View style={styles.serviceDetail}>
-                  <Text style={styles.detailLabel}>Duration</Text>
-                  <Text style={styles.detailValue}>{service.duration}</Text>
-                </View>
-                <View style={styles.serviceDetail}>
-                  <Text style={styles.detailLabel}>Fee</Text>
-                  <Text style={[styles.detailValue, { color: service.color }]}>
-                    {service.fee}
-                  </Text>
+                <View style={styles.cardBody}>
+                  <Text style={styles.cardTitle}>{service.title}</Text>
+                  <Text style={styles.cardDescription}>{service.description}</Text>
                 </View>
               </View>
-              
-              <TouchableOpacity
-                style={[styles.applyButton, { backgroundColor: service.color }]}
-                onPress={() => handleApply(service)}
-                activeOpacity={0.8}
-              >
+
+              <View style={styles.metaRow}>
+                <Meta label="Duration" value={service.duration} />
+                <Meta label="Fee" value={service.fee} />
+              </View>
+
+              <TouchableOpacity style={styles.applyButton} onPress={() => handleApply(service)} activeOpacity={0.86}>
                 <Text style={styles.applyButtonText}>Apply Now</Text>
+                <Ionicons name="arrow-forward" size={14} color={mobileTheme.colors.textOnPrimary} />
               </TouchableOpacity>
             </View>
           ))}
         </View>
-
-        {/* Features */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Why Choose Us?</Text>
-          <View style={styles.featuresGrid}>
-            {features.map((feature, index) => (
-              <View key={index} style={styles.featureCard}>
-                <View style={styles.featureIcon}>
-                  <Text style={styles.featureIconText}>{feature.icon}</Text>
-                </View>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={styles.featureDesc}>{feature.desc}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Help Card */}
-        <View style={styles.section}>
-          <View style={styles.helpCard}>
-            <View style={styles.helpContent}>
-              <Text style={styles.helpIcon}>💡</Text>
-              <View style={styles.helpText}>
-                <Text style={styles.helpTitle}>Need Assistance?</Text>
-                <Text style={styles.helpSubtitle}>
-                  Our experts can guide you through the registration process
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Support')}
-              style={styles.helpButton}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.helpButtonText}>Contact Support</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+const Meta = ({ label, value }) => (
+  <View style={styles.metaBox}>
+    <Text style={styles.metaLabel}>{label}</Text>
+    <Text style={styles.metaValue}>{value}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.background,
+    backgroundColor: mobileTheme.colors.background,
   },
   header: {
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingTop: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: professionalTheme.spacing.lg,
-    paddingVertical: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.surface,
-    ...professionalTheme.shadows.sm,
+    gap: mobileTheme.spacing.sm,
   },
-  backButton: {
+  iconButton: {
     width: 40,
     height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.primarySoft,
   },
-  backIcon: {
-    fontSize: 24,
-    color: professionalTheme.colors.textPrimary,
-    fontWeight: professionalTheme.typography.bold,
-  },
-  headerContent: {
+  headerBody: {
     flex: 1,
-    marginLeft: professionalTheme.spacing.sm,
   },
   headerTitle: {
-    fontSize: professionalTheme.typography.h4,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
   },
   headerSubtitle: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-    marginTop: professionalTheme.spacing.xs,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  infoBanner: {
-    flexDirection: 'row',
-    backgroundColor: professionalTheme.colors.infoBg,
-    marginHorizontal: professionalTheme.spacing.lg,
-    marginTop: professionalTheme.spacing.xl,
-    padding: professionalTheme.spacing.lg,
-    borderRadius: professionalTheme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: professionalTheme.colors.info + '30',
-  },
-  bannerIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: professionalTheme.borderRadius.md,
-    backgroundColor: professionalTheme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: professionalTheme.spacing.md,
-  },
-  bannerIconText: {
-    fontSize: 24,
-  },
-  bannerContent: {
+  scroll: {
     flex: 1,
   },
-  bannerTitle: {
-    fontSize: professionalTheme.typography.h5,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
+  banner: {
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.lg,
+    borderRadius: mobileTheme.radius.lg,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.primarySoft,
+    padding: mobileTheme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: mobileTheme.spacing.sm,
   },
   bannerText: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textSecondary,
+    flex: 1,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
     lineHeight: 20,
   },
-  section: {
-    paddingHorizontal: professionalTheme.spacing.lg,
-    marginTop: professionalTheme.spacing.xl,
+  list: {
+    padding: mobileTheme.spacing.lg,
   },
-  sectionTitle: {
-    fontSize: professionalTheme.typography.h4,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.lg,
+  card: {
+    borderRadius: mobileTheme.radius.lg,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.md,
+    ...mobileTheme.shadows.sm,
   },
-  serviceCard: {
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
-    padding: professionalTheme.spacing.lg,
-    marginBottom: professionalTheme.spacing.lg,
-    ...professionalTheme.shadows.md,
-  },
-  serviceHeader: {
+  cardHead: {
     flexDirection: 'row',
-    marginBottom: professionalTheme.spacing.md,
   },
-  serviceIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: professionalTheme.borderRadius.md,
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: professionalTheme.spacing.md,
+    backgroundColor: mobileTheme.colors.primarySoft,
+    marginRight: mobileTheme.spacing.md,
   },
-  serviceIconText: {
-    fontSize: 28,
-  },
-  serviceInfo: {
+  cardBody: {
     flex: 1,
-    justifyContent: 'center',
   },
-  serviceTitle: {
-    fontSize: professionalTheme.typography.h5,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
+  cardTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  serviceSubtitle: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
+  cardDescription: {
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
+    lineHeight: 18,
   },
-  serviceDescription: {
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textSecondary,
-    marginBottom: professionalTheme.spacing.lg,
-    lineHeight: 22,
-  },
-  serviceDetails: {
+  metaRow: {
+    marginTop: mobileTheme.spacing.md,
     flexDirection: 'row',
-    marginBottom: professionalTheme.spacing.lg,
-    gap: professionalTheme.spacing.md,
+    gap: mobileTheme.spacing.sm,
   },
-  serviceDetail: {
+  metaBox: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.backgroundDark,
-    borderRadius: professionalTheme.borderRadius.md,
-    padding: professionalTheme.spacing.md,
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.surfaceMuted,
+    padding: mobileTheme.spacing.sm,
   },
-  detailLabel: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-    marginBottom: professionalTheme.spacing.xs,
-    fontWeight: professionalTheme.typography.medium,
+  metaLabel: {
+    color: mobileTheme.colors.textTertiary,
+    fontSize: 11,
   },
-  detailValue: {
-    fontSize: professionalTheme.typography.bodySmall,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textPrimary,
+  metaValue: {
+    marginTop: 2,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.caption,
+    fontWeight: mobileTheme.typography.semibold,
   },
   applyButton: {
-    backgroundColor: professionalTheme.colors.accent,
-    borderRadius: professionalTheme.borderRadius.md,
-    paddingVertical: professionalTheme.spacing.lg,
-    alignItems: 'center',
-    ...professionalTheme.shadows.sm,
-  },
-  applyButtonText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textInverse,
-  },
-  featuresGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: professionalTheme.spacing.md,
-  },
-  featureCard: {
-    width: '48%',
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
-    padding: professionalTheme.spacing.lg,
-    alignItems: 'center',
-    ...professionalTheme.shadows.sm,
-  },
-  featureIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: professionalTheme.borderRadius.md,
-    backgroundColor: professionalTheme.colors.backgroundDark,
+    marginTop: mobileTheme.spacing.md,
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.primary,
+    minHeight: 42,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: professionalTheme.spacing.md,
-  },
-  featureIconText: {
-    fontSize: 28,
-  },
-  featureTitle: {
-    fontSize: professionalTheme.typography.bodySmall,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
-    textAlign: 'center',
-  },
-  featureDesc: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  helpCard: {
-    backgroundColor: professionalTheme.colors.successBg,
-    borderRadius: professionalTheme.borderRadius.lg,
-    padding: professionalTheme.spacing.xl,
-    borderWidth: 1,
-    borderColor: professionalTheme.colors.success + '30',
-  },
-  helpContent: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: professionalTheme.spacing.lg,
+    gap: mobileTheme.spacing.xs,
   },
-  helpIcon: {
-    fontSize: 40,
-    marginRight: professionalTheme.spacing.md,
-  },
-  helpText: {
-    flex: 1,
-  },
-  helpTitle: {
-    fontSize: professionalTheme.typography.h5,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
-  },
-  helpSubtitle: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textSecondary,
-    lineHeight: 20,
-  },
-  helpButton: {
-    backgroundColor: professionalTheme.colors.accent,
-    borderRadius: professionalTheme.borderRadius.md,
-    paddingVertical: professionalTheme.spacing.lg,
-    alignItems: 'center',
-    ...professionalTheme.shadows.sm,
-  },
-  helpButtonText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textInverse,
+  applyButtonText: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
 });
 

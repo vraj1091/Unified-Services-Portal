@@ -5,18 +5,20 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
-  SafeAreaView,
-  StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import mobileTheme from '../../theme/mobileTheme';
 import { useAuth } from '../../context/AuthContext';
-import professionalTheme from '../../theme/professionalTheme';
 
 const RegisterScreen = ({ navigation }) => {
   const { register } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -25,332 +27,254 @@ const RegisterScreen = ({ navigation }) => {
     password: '',
     confirmPassword: '',
   });
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+
+  const update = (key, value) => setFormData((prev) => ({ ...prev, [key]: value }));
 
   const handleRegister = async () => {
-    if (!formData.full_name || !formData.email || !formData.mobile || !formData.city || !formData.password) {
-      Alert.alert('Required Fields', 'Please fill in all fields');
+    const { full_name, email, mobile, city, password, confirmPassword } = formData;
+
+    if (!full_name || !email || !mobile || !city || !password || !confirmPassword) {
+      Alert.alert('Required', 'Please complete all fields.');
       return;
     }
-
-    if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Password Mismatch', 'Passwords do not match');
+    if (password.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters.');
       return;
     }
-
-    if (formData.password.length < 6) {
-      Alert.alert('Weak Password', 'Password must be at least 6 characters');
+    if (password !== confirmPassword) {
+      Alert.alert('Password Mismatch', 'Password and confirm password must match.');
       return;
     }
 
     setLoading(true);
     const result = await register({
-      full_name: formData.full_name,
-      email: formData.email,
-      mobile: formData.mobile,
-      city: formData.city,
-      password: formData.password,
+      full_name,
+      email,
+      mobile,
+      city,
+      password,
     });
     setLoading(false);
 
-    if (result.success) {
-      const message = result.message || 'Registration successful! Please login.';
-      Alert.alert('Success', message, [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
-      ]);
-    } else {
-      Alert.alert('Registration Failed', result.message);
+    if (!result.success) {
+      Alert.alert('Registration Failed', result.message || 'Please try again.');
+      return;
     }
+
+    Alert.alert('Account Created', 'Registration completed successfully.', [
+      { text: 'Continue', onPress: () => navigation.navigate('Login') },
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={professionalTheme.colors.background} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Logo Section */}
-          <View style={styles.logoSection}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>GS</Text>
-            </View>
-            <Text style={styles.appName}>Create Account</Text>
-            <Text style={styles.tagline}>Join Gujarat Services Portal</Text>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Create Account</Text>
           </View>
 
-          {/* Form Section */}
-          <View style={styles.formSection}>
-          {/* Full Name */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>👤</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Citizen Registration</Text>
+            <Text style={styles.cardSubTitle}>Set up your profile to access services</Text>
+
+            <Field icon="person-outline">
               <TextInput
                 style={styles.input}
-                placeholder="Enter your full name"
-                placeholderTextColor={professionalTheme.colors.textTertiary}
+                placeholder="Full name"
+                placeholderTextColor={mobileTheme.colors.textTertiary}
                 value={formData.full_name}
-                onChangeText={(text) => setFormData({ ...formData, full_name: text })}
+                onChangeText={(v) => update('full_name', v)}
               />
-            </View>
-          </View>
+            </Field>
 
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>✉</Text>
+            <Field icon="mail-outline">
               <TextInput
                 style={styles.input}
-                placeholder="your.email@example.com"
-                placeholderTextColor={professionalTheme.colors.textTertiary}
+                placeholder="Email address"
+                placeholderTextColor={mobileTheme.colors.textTertiary}
                 value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                onChangeText={(v) => update('email', v)}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
-            </View>
-          </View>
+            </Field>
 
-          {/* Mobile */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mobile Number</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>📱</Text>
+            <Field icon="call-outline">
               <TextInput
                 style={styles.input}
-                placeholder="10-digit mobile number"
-                placeholderTextColor={professionalTheme.colors.textTertiary}
+                placeholder="Mobile number"
+                placeholderTextColor={mobileTheme.colors.textTertiary}
                 value={formData.mobile}
-                onChangeText={(text) => setFormData({ ...formData, mobile: text })}
+                onChangeText={(v) => update('mobile', v)}
                 keyboardType="phone-pad"
                 maxLength={10}
               />
-            </View>
-          </View>
+            </Field>
 
-          {/* City */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>City</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>📍</Text>
+            <Field icon="location-outline">
               <TextInput
                 style={styles.input}
-                placeholder="Enter your city"
-                placeholderTextColor={professionalTheme.colors.textTertiary}
+                placeholder="City"
+                placeholderTextColor={mobileTheme.colors.textTertiary}
                 value={formData.city}
-                onChangeText={(text) => setFormData({ ...formData, city: text })}
+                onChangeText={(v) => update('city', v)}
               />
-            </View>
-          </View>
+            </Field>
 
-          {/* Password */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>🔒</Text>
+            <Field icon="lock-closed-outline">
               <TextInput
                 style={styles.input}
-                placeholder="Minimum 6 characters"
-                placeholderTextColor={professionalTheme.colors.textTertiary}
+                placeholder="Password"
+                placeholderTextColor={mobileTheme.colors.textTertiary}
                 value={formData.password}
-                onChangeText={(text) => setFormData({ ...formData, password: text })}
+                onChangeText={(v) => update('password', v)}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeButton}
-              >
-                <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
+              <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)} activeOpacity={0.8}>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={mobileTheme.colors.textTertiary}
+                />
+              </TouchableOpacity>
+            </Field>
+
+            <Field icon="shield-checkmark-outline">
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm password"
+                placeholderTextColor={mobileTheme.colors.textTertiary}
+                value={formData.confirmPassword}
+                onChangeText={(v) => update('confirmPassword', v)}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+            </Field>
+
+            <TouchableOpacity style={styles.primaryButton} onPress={handleRegister} activeOpacity={0.88} disabled={loading}>
+              <Text style={styles.primaryButtonText}>{loading ? 'Creating account...' : 'Create Account'}</Text>
+            </TouchableOpacity>
+
+            <View style={styles.footerRow}>
+              <Text style={styles.footerText}>Already registered?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.footerLink}> Sign in</Text>
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Confirm Password */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirm Password</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>🔒</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Re-enter password"
-                placeholderTextColor={professionalTheme.colors.textTertiary}
-                value={formData.confirmPassword}
-                onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-            </View>
-          </View>
-
-          {/* Register Button */}
-          <TouchableOpacity
-            onPress={handleRegister}
-            disabled={loading}
-            style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.registerButtonText}>
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Login Link */}
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.loginLink}>Sign In</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              By continuing, you agree to our{' '}
-              <Text style={styles.footerLink}>Terms</Text> and{' '}
-              <Text style={styles.footerLink}>Privacy Policy</Text>
-            </Text>
-          </View>
-        </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
+const Field = ({ icon, children }) => (
+  <View style={styles.inputWrap}>
+    <Ionicons name={icon} size={18} color={mobileTheme.colors.textTertiary} />
+    {children}
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.background,
-  },
-  keyboardView: {
-    flex: 1,
+    backgroundColor: mobileTheme.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: professionalTheme.spacing.xl,
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingBottom: mobileTheme.spacing.xxl,
   },
-  logoSection: {
-    alignItems: 'center',
-    paddingTop: professionalTheme.spacing.xxxl,
-    paddingBottom: professionalTheme.spacing.xxl,
-  },
-  logoContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: professionalTheme.colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: professionalTheme.spacing.lg,
-    ...professionalTheme.shadows.md,
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textInverse,
-  },
-  appName: {
-    fontSize: professionalTheme.typography.h3,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
-  },
-  tagline: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textSecondary,
-  },
-  formSection: {
-    flex: 1,
-  },
-  inputGroup: {
-    marginBottom: professionalTheme.spacing.lg,
-  },
-  label: {
-    fontSize: professionalTheme.typography.bodySmall,
-    fontWeight: professionalTheme.typography.medium,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.sm,
-  },
-  inputContainer: {
+  header: {
+    marginTop: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: professionalTheme.colors.border,
-    paddingHorizontal: professionalTheme.spacing.lg,
-    height: 56,
+    marginBottom: mobileTheme.spacing.md,
   },
-  inputIcon: {
-    fontSize: 20,
-    marginRight: professionalTheme.spacing.md,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.primarySoft,
+    marginRight: mobileTheme.spacing.sm,
+  },
+  headerTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
+  },
+  card: {
+    backgroundColor: mobileTheme.colors.surface,
+    borderRadius: mobileTheme.radius.xl,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    padding: mobileTheme.spacing.xl,
+    ...mobileTheme.shadows.md,
+  },
+  cardTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
+  },
+  cardSubTitle: {
+    color: mobileTheme.colors.textSecondary,
+    marginTop: 4,
+    marginBottom: mobileTheme.spacing.lg,
+    fontSize: mobileTheme.typography.small,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    borderRadius: mobileTheme.radius.md,
+    paddingHorizontal: mobileTheme.spacing.md,
+    backgroundColor: mobileTheme.colors.surfaceMuted,
+    marginBottom: mobileTheme.spacing.md,
+    height: 50,
   },
   input: {
     flex: 1,
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textPrimary,
     height: '100%',
+    marginLeft: mobileTheme.spacing.sm,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.body,
   },
-  eyeButton: {
-    padding: professionalTheme.spacing.sm,
-  },
-  eyeIcon: {
-    fontSize: 20,
-  },
-  registerButton: {
-    backgroundColor: professionalTheme.colors.accent,
-    borderRadius: professionalTheme.borderRadius.md,
-    height: 56,
+  primaryButton: {
+    marginTop: mobileTheme.spacing.sm,
+    height: 52,
+    borderRadius: mobileTheme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: professionalTheme.spacing.md,
-    ...professionalTheme.shadows.md,
+    backgroundColor: mobileTheme.colors.primary,
+    ...mobileTheme.shadows.sm,
   },
-  registerButtonDisabled: {
-    opacity: 0.6,
+  primaryButtonText: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontSize: mobileTheme.typography.body,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  registerButtonText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textInverse,
-  },
-  loginContainer: {
+  footerRow: {
+    marginTop: mobileTheme.spacing.lg,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: professionalTheme.spacing.xl,
-  },
-  loginText: {
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textSecondary,
-  },
-  loginLink: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.accent,
-  },
-  footer: {
-    paddingVertical: professionalTheme.spacing.xxl,
-    alignItems: 'center',
   },
   footerText: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 18,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
   },
   footerLink: {
-    color: professionalTheme.colors.accent,
-    fontWeight: professionalTheme.typography.medium,
+    color: mobileTheme.colors.primary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
 });
 

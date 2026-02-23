@@ -1,9 +1,5 @@
 import axios from 'axios';
-
-// Update this URL to match your backend
-// For local testing, use your computer's IP address (not localhost)
-// Example: 'http://192.168.1.100:8000'
-const API_URL = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 // Check if we're in development mode
 const isDevelopment = __DEV__;
@@ -15,6 +11,14 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+export const setAuthToken = (token) => {
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common.Authorization;
+  }
+};
 
 // Request interceptor
 api.interceptors.request.use(

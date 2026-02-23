@@ -1,11 +1,15 @@
 import 'react-native-gesture-handler';
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { DocumentProvider } from './src/context/DocumentContext';
+import mobileTheme from './src/theme/mobileTheme';
 
 // Import screens
 import LoginScreenPro from './src/screens/auth/LoginScreenPro';
@@ -23,6 +27,62 @@ import CompanyFormationScreenPro from './src/screens/company/CompanyFormationScr
 import GovernmentGrantsScreenPro from './src/screens/grants/GovernmentGrantsScreenPro';
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: mobileTheme.colors.background,
+    card: mobileTheme.colors.surface,
+    text: mobileTheme.colors.textPrimary,
+    border: mobileTheme.colors.border,
+    primary: mobileTheme.colors.primary,
+  },
+};
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: mobileTheme.colors.primary,
+        tabBarInactiveTintColor: mobileTheme.colors.textTertiary,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: mobileTheme.typography.semibold,
+          marginBottom: 4,
+        },
+        tabBarStyle: {
+          height: 76,
+          paddingTop: 8,
+          paddingHorizontal: 10,
+          backgroundColor: mobileTheme.colors.surface,
+          borderTopColor: mobileTheme.colors.border,
+          borderTopWidth: 1,
+        },
+        tabBarIcon: ({ focused, color, size }) => {
+          const iconByRoute = {
+            Home: focused ? 'home' : 'home-outline',
+            Applications: focused ? 'layers' : 'layers-outline',
+            Documents: focused ? 'folder' : 'folder-outline',
+            Support: focused ? 'help-circle' : 'help-circle-outline',
+            Profile: focused ? 'person' : 'person-outline',
+          };
+
+          return <Ionicons name={iconByRoute[route.name] || 'ellipse-outline'} size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={DashboardScreen} />
+      <Tab.Screen name="Applications" component={ApplicationsScreenPro} />
+      <Tab.Screen name="Documents" component={DocumentsScreenPro} />
+      <Tab.Screen name="Support" component={SupportScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
 
 function AuthStack() {
   return (
@@ -43,14 +103,10 @@ function AppStack() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        cardStyle: { backgroundColor: '#F8FAFC' },
+        cardStyle: { backgroundColor: mobileTheme.colors.background },
       }}
     >
-      <Stack.Screen name="Dashboard" component={DashboardScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
-      <Stack.Screen name="Applications" component={ApplicationsScreenPro} />
-      <Stack.Screen name="Documents" component={DocumentsScreenPro} />
-      <Stack.Screen name="Support" component={SupportScreen} />
+      <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="UtilityServices" component={UtilityServicesScreen} />
       <Stack.Screen name="ServiceProviders" component={ServiceProvidersScreen} />
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
@@ -65,11 +121,15 @@ function Navigation() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return null; // Or a loading screen
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color={mobileTheme.colors.primary} />
+      </View>
+    );
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       {user ? <AppStack /> : <AuthStack />}
     </NavigationContainer>
   );
@@ -81,9 +141,18 @@ export default function App() {
       <DocumentProvider>
         <AuthProvider>
           <Navigation />
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
         </AuthProvider>
       </DocumentProvider>
     </ThemeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loader: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.background,
+  },
+});

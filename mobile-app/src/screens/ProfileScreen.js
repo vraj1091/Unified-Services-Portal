@@ -6,342 +6,270 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  StatusBar,
   Alert,
   Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import professionalTheme from '../theme/professionalTheme';
+import mobileTheme from '../theme/mobileTheme';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, logout } = useAuth();
+  const displayName = user?.full_name || user?.name || 'Citizen';
 
-  const handleLogout = () => {
-    if (Platform.OS === 'web') {
-      if (window.confirm('Are you sure you want to logout?')) {
-        logout();
-      }
-    } else {
-      Alert.alert(
-        'Logout',
-        'Are you sure you want to logout?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Logout', onPress: logout, style: 'destructive' },
-        ]
-      );
+  const runLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      // Auth context already handles state reset; keep this non-blocking.
     }
   };
 
-  const profileSections = [
+  const handleLogout = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof window.confirm === 'function') {
+      const confirmed = window.confirm('Do you want to logout from this account?');
+      if (confirmed) {
+        runLogout();
+      }
+      return;
+    }
+
+    Alert.alert('Logout', 'Do you want to logout from this account?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Logout', style: 'destructive', onPress: runLogout },
+    ]);
+  };
+
+  const menuSections = [
     {
       title: 'Account',
       items: [
-        { id: 'personal', label: 'Personal Information', icon: '👤', action: () => {} },
-        { id: 'security', label: 'Security & Privacy', icon: '🔒', action: () => {} },
-        { id: 'notifications', label: 'Notifications', icon: '🔔', action: () => {} },
+        { key: 'personal', label: 'Personal Information', icon: 'person-circle-outline' },
+        { key: 'security', label: 'Security & Privacy', icon: 'shield-checkmark-outline' },
       ],
     },
     {
       title: 'Services',
       items: [
-        { id: 'applications', label: 'My Applications', icon: '📋', action: () => navigation.navigate('Applications') },
-        { id: 'documents', label: 'My Documents', icon: '📄', action: () => navigation.navigate('Documents') },
-        { id: 'payments', label: 'Payment History', icon: '💳', action: () => {} },
-      ],
-    },
-    {
-      title: 'Support',
-      items: [
-        { id: 'help', label: 'Help Center', icon: '❓', action: () => navigation.navigate('Support') },
-        { id: 'feedback', label: 'Send Feedback', icon: '💬', action: () => {} },
-        { id: 'about', label: 'About', icon: 'ℹ️', action: () => {} },
+        { key: 'applications', label: 'My Applications', icon: 'layers-outline', action: () => navigation.navigate('Applications') },
+        { key: 'documents', label: 'My Documents', icon: 'folder-outline', action: () => navigation.navigate('Documents') },
+        { key: 'support', label: 'Support', icon: 'headset-outline', action: () => navigation.navigate('Support') },
       ],
     },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={professionalTheme.colors.background} />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={styles.headerRight} />
-      </View>
-
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Profile Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatarLarge}>
-            <Text style={styles.avatarLargeText}>
-              {(user?.name || 'U').charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.userName}>{user?.name || 'User'}</Text>
-          <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
-          
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>Applications</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>8</Text>
-              <Text style={styles.statLabel}>Documents</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>3</Text>
-              <Text style={styles.statLabel}>Active</Text>
-            </View>
-          </View>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerSubtitle}>Manage your account and preferences</Text>
         </View>
 
-        {/* Profile Sections */}
-        {profileSections.map((section, sectionIndex) => (
-          <View key={sectionIndex} style={styles.section}>
+        <View style={styles.userCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{displayName.charAt(0).toUpperCase()}</Text>
+          </View>
+          <Text style={styles.userName}>{displayName}</Text>
+          <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
+          <Text style={styles.userMeta}>{user?.city || 'Ahmedabad'} • {user?.mobile || '9876543210'}</Text>
+        </View>
+
+        <View style={styles.statsRow}>
+          <Stat label="Applications" value="12" />
+          <Stat label="Documents" value="8" />
+          <Stat label="Active" value="3" />
+        </View>
+
+        {menuSections.map((section) => (
+          <View key={section.title} style={styles.section}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
             <View style={styles.sectionCard}>
-              {section.items.map((item, itemIndex) => (
+              {section.items.map((item, index) => (
                 <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.menuItem,
-                    itemIndex !== section.items.length - 1 && styles.menuItemBorder
-                  ]}
-                  onPress={item.action}
-                  activeOpacity={0.7}
+                  key={item.key}
+                  style={[styles.menuItem, index !== section.items.length - 1 && styles.menuBorder]}
+                  activeOpacity={0.82}
+                  onPress={item.action || (() => {})}
                 >
-                  <View style={styles.menuItemLeft}>
-                    <View style={styles.menuIcon}>
-                      <Text style={styles.menuIconText}>{item.icon}</Text>
-                    </View>
-                    <Text style={styles.menuLabel}>{item.label}</Text>
+                  <View style={styles.menuLeft}>
+                    <Ionicons name={item.icon} size={18} color={mobileTheme.colors.primary} />
+                    <Text style={styles.menuText}>{item.label}</Text>
                   </View>
-                  <Text style={styles.menuArrow}>→</Text>
+                  <Ionicons name="chevron-forward" size={16} color={mobileTheme.colors.textTertiary} />
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         ))}
 
-        {/* Logout Button */}
         <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.logoutIcon}>🚪</Text>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.86}>
+            <Ionicons name="log-out-outline" size={18} color={mobileTheme.colors.textOnPrimary} />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
 
-        {/* App Version */}
-        <View style={styles.footer}>
-          <Text style={styles.versionText}>Version 1.0.0</Text>
-          <Text style={styles.copyrightText}>© 2024 Gujarat Services</Text>
-        </View>
-
-        <View style={{ height: 40 }} />
+        <Text style={styles.versionText}>Version 2.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+const Stat = ({ label, value }) => (
+  <View style={styles.statCard}>
+    <Text style={styles.statValue}>{value}</Text>
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: professionalTheme.colors.background,
+    backgroundColor: mobileTheme.colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: professionalTheme.spacing.lg,
-    paddingVertical: professionalTheme.spacing.lg,
-    backgroundColor: professionalTheme.colors.surface,
-    ...professionalTheme.shadows.sm,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 24,
-    color: professionalTheme.colors.textPrimary,
-    fontWeight: professionalTheme.typography.bold,
-  },
-  headerTitle: {
-    fontSize: professionalTheme.typography.h4,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-  },
-  headerRight: {
-    width: 40,
-  },
-  scrollView: {
+  scroll: {
     flex: 1,
   },
-  profileCard: {
-    backgroundColor: professionalTheme.colors.surface,
-    margin: professionalTheme.spacing.lg,
-    borderRadius: professionalTheme.borderRadius.lg,
-    padding: professionalTheme.spacing.xxl,
-    alignItems: 'center',
-    ...professionalTheme.shadows.md,
+  header: {
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingTop: mobileTheme.spacing.md,
   },
-  avatarLarge: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: professionalTheme.colors.accent,
+  headerTitle: {
+    fontSize: mobileTheme.typography.h1,
+    fontWeight: mobileTheme.typography.bold,
+    color: mobileTheme.colors.textPrimary,
+  },
+  headerSubtitle: {
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
+  },
+  userCard: {
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.lg,
+    borderRadius: mobileTheme.radius.xl,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    alignItems: 'center',
+    padding: mobileTheme.spacing.xl,
+    ...mobileTheme.shadows.sm,
+  },
+  avatar: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: professionalTheme.spacing.lg,
-    ...professionalTheme.shadows.lg,
+    backgroundColor: mobileTheme.colors.primary,
+    marginBottom: mobileTheme.spacing.md,
   },
-  avatarLargeText: {
-    fontSize: 40,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textInverse,
+  avatarText: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontSize: mobileTheme.typography.h1,
+    fontWeight: mobileTheme.typography.bold,
   },
   userName: {
-    fontSize: professionalTheme.typography.h3,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.textPrimary,
-    marginBottom: professionalTheme.spacing.xs,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
+    color: mobileTheme.colors.textPrimary,
   },
   userEmail: {
-    fontSize: professionalTheme.typography.body,
-    color: professionalTheme.colors.textSecondary,
-    marginBottom: professionalTheme.spacing.xl,
+    marginTop: 2,
+    fontSize: mobileTheme.typography.small,
+    color: mobileTheme.colors.textSecondary,
+  },
+  userMeta: {
+    marginTop: 2,
+    fontSize: mobileTheme.typography.caption,
+    color: mobileTheme.colors.textTertiary,
   },
   statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    paddingTop: professionalTheme.spacing.xl,
-    borderTopWidth: 1,
-    borderTopColor: professionalTheme.colors.border,
+    gap: mobileTheme.spacing.sm,
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.md,
   },
-  statItem: {
+  statCard: {
     flex: 1,
+    borderRadius: mobileTheme.radius.lg,
+    backgroundColor: mobileTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
     alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: professionalTheme.colors.border,
+    paddingVertical: mobileTheme.spacing.md,
   },
   statValue: {
-    fontSize: professionalTheme.typography.h3,
-    fontWeight: professionalTheme.typography.bold,
-    color: professionalTheme.colors.accent,
-    marginBottom: professionalTheme.spacing.xs,
+    color: mobileTheme.colors.primary,
+    fontWeight: mobileTheme.typography.bold,
+    fontSize: mobileTheme.typography.h2,
   },
   statLabel: {
-    fontSize: professionalTheme.typography.bodySmall,
-    color: professionalTheme.colors.textSecondary,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
   section: {
-    paddingHorizontal: professionalTheme.spacing.lg,
-    marginTop: professionalTheme.spacing.xl,
+    marginTop: mobileTheme.spacing.lg,
+    paddingHorizontal: mobileTheme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: professionalTheme.typography.bodySmall,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.textSecondary,
-    marginBottom: professionalTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.sm,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    fontWeight: mobileTheme.typography.semibold,
   },
   sectionCard: {
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
+    borderRadius: mobileTheme.radius.lg,
+    backgroundColor: mobileTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
     overflow: 'hidden',
-    ...professionalTheme.shadows.sm,
   },
   menuItem: {
+    minHeight: 52,
+    paddingHorizontal: mobileTheme.spacing.md,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: professionalTheme.spacing.lg,
-    paddingHorizontal: professionalTheme.spacing.lg,
+    alignItems: 'center',
   },
-  menuItemBorder: {
+  menuBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: professionalTheme.colors.borderLight,
+    borderBottomColor: mobileTheme.colors.border,
   },
-  menuItemLeft: {
+  menuLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    gap: mobileTheme.spacing.sm,
   },
-  menuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: professionalTheme.borderRadius.md,
-    backgroundColor: professionalTheme.colors.backgroundDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: professionalTheme.spacing.md,
-  },
-  menuIconText: {
-    fontSize: 20,
-  },
-  menuLabel: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.medium,
-    color: professionalTheme.colors.textPrimary,
-  },
-  menuArrow: {
-    fontSize: 20,
-    color: professionalTheme.colors.textTertiary,
-    fontWeight: professionalTheme.typography.bold,
+  menuText: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.medium,
   },
   logoutButton: {
-    flexDirection: 'row',
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.danger,
+    paddingVertical: mobileTheme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: professionalTheme.colors.surface,
-    borderRadius: professionalTheme.borderRadius.lg,
-    paddingVertical: professionalTheme.spacing.lg,
-    borderWidth: 1.5,
-    borderColor: professionalTheme.colors.error,
-    ...professionalTheme.shadows.sm,
-  },
-  logoutIcon: {
-    fontSize: 20,
-    marginRight: professionalTheme.spacing.sm,
+    flexDirection: 'row',
+    gap: mobileTheme.spacing.sm,
   },
   logoutText: {
-    fontSize: professionalTheme.typography.body,
-    fontWeight: professionalTheme.typography.semibold,
-    color: professionalTheme.colors.error,
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: professionalTheme.spacing.xxl,
+    color: mobileTheme.colors.textOnPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
   versionText: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textTertiary,
-    marginBottom: professionalTheme.spacing.xs,
-  },
-  copyrightText: {
-    fontSize: professionalTheme.typography.caption,
-    color: professionalTheme.colors.textTertiary,
+    marginTop: mobileTheme.spacing.xl,
+    marginBottom: mobileTheme.spacing.xxxl,
+    textAlign: 'center',
+    color: mobileTheme.colors.textTertiary,
+    fontSize: mobileTheme.typography.caption,
   },
 });
 

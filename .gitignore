@@ -24,6 +24,10 @@ dist/
 build/
 */dist/
 */build/
+web-build/
+*/web-build/
+.expo/
+*/.expo/
 
 # Logs
 logs

@@ -26,6 +26,9 @@ export const DocumentProvider = ({ children }) => {
       source: document.source || 'manual',
       serviceType: document.serviceType || null,
       provider: document.provider || null,
+      fileData: document.fileData || null,
+      fileType: document.fileType || null,
+      uri: document.uri || null,
     };
     setDocuments(prev => [newDoc, ...prev]);
     return newDoc;

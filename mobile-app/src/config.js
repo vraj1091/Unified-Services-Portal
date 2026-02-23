@@ -1,16 +1,43 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-// For physical device, change this to your computer's IP address (e.g., 'http://192.168.1.5:8000')
-// For Android Emulator, use 'http://10.0.2.2:8000'
-// For iOS Simulator or Web, use 'http://localhost:8000'
+const DEFAULT_BACKEND_PORT = '8000';
 
-const DEV_API_URL = Platform.select({
-    android: 'http://10.0.2.2:8000', // Default for Android Emulator
-    ios: 'http://localhost:8000',
-    web: 'http://localhost:8000',
-    default: 'http://localhost:8000',
-});
+const trimTrailingSlash = (value) => value.replace(/\/+$/, '');
 
-// If you are running on a physical device, replace the above with your machine's local IP
-// export const API_URL = 'http://192.168.x.x:8000'; 
-export const API_URL = DEV_API_URL;
+const getHostFromExpo = () => {
+  const hostUri =
+    Constants?.expoConfig?.hostUri ||
+    Constants?.manifest2?.extra?.expoClient?.hostUri ||
+    Constants?.manifest?.debuggerHost ||
+    '';
+
+  if (!hostUri) return null;
+
+  const [host] = hostUri.split(':');
+  if (!host || host === 'localhost' || host === '127.0.0.1') {
+    return null;
+  }
+
+  return host;
+};
+
+const getDefaultApiUrl = () => {
+  if (Platform.OS === 'android') {
+    const expoHost = getHostFromExpo();
+    if (expoHost) {
+      return `http://${expoHost}:${DEFAULT_BACKEND_PORT}`;
+    }
+    return 'http://10.0.2.2:8000';
+  }
+
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.hostname) {
+    return `http://${window.location.hostname}:${DEFAULT_BACKEND_PORT}`;
+  }
+
+  return 'http://localhost:8000';
+};
+
+const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+
+export const API_URL = trimTrailingSlash(configuredUrl || getDefaultApiUrl());

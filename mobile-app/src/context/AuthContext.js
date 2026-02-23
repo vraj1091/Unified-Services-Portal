@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../services/api';
+import api, { setAuthToken } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -22,6 +22,36 @@ export const AuthProvider = ({ children }) => {
     loadStoredAuth();
   }, []);
 
+  const buildDemoUser = (email, extra = {}) => {
+    const baseName = (email || 'demo.user').split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ');
+    const prettyName = baseName
+      .split(' ')
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+
+    return {
+      id: 1,
+      email: email || 'demo@example.com',
+      full_name: prettyName || 'Demo User',
+      mobile: '9876543210',
+      city: 'Ahmedabad',
+      ...extra,
+    };
+  };
+
+  const persistSession = async ({ nextToken, nextUser, isDemo }) => {
+    await AsyncStorage.setItem('token', nextToken);
+    await AsyncStorage.setItem('user', JSON.stringify(nextUser));
+    await AsyncStorage.setItem('demoMode', isDemo ? 'true' : 'false');
+
+    setToken(nextToken);
+    setUser(nextUser);
+    setDemoMode(isDemo);
+
+    setAuthToken(isDemo ? null : nextToken);
+  };
+
   const loadStoredAuth = async () => {
     try {
       const storedToken = await AsyncStorage.getItem('token');
@@ -32,9 +62,7 @@ export const AuthProvider = ({ children }) => {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
         setDemoMode(storedDemoMode === 'true');
-        if (storedDemoMode !== 'true') {
-          api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        }
+        setAuthToken(storedDemoMode === 'true' ? null : storedToken);
       }
     } catch (error) {
       console.error('Failed to load auth:', error);
@@ -52,44 +80,67 @@ export const AuthProvider = ({ children }) => {
       };
     }
 
-    console.log('Attempting login...');
-    
-    // Always use demo mode for now (backend not configured)
-    // This ensures the app works immediately without any setup
-    console.log('Using demo mode - backend not required');
-    
-    // Create demo user
-    const demoUser = {
-      id: 1,
-      email: email,
-      full_name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-      mobile: '9876543210',
-      city: 'Ahmedabad',
-    };
-    
-    const demoToken = 'demo_token_' + Date.now();
-    
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
-      await AsyncStorage.setItem('token', demoToken);
-      await AsyncStorage.setItem('user', JSON.stringify(demoUser));
-      await AsyncStorage.setItem('demoMode', 'true');
-      
-      setToken(demoToken);
-      setUser(demoUser);
-      setDemoMode(true);
-      
-      console.log('Demo login successful');
-      
-      return { 
-        success: true, 
-        message: 'Login successful (Demo Mode)' 
+      const response = await api.post('/api/auth/login', {
+        email: normalizedEmail,
+        password,
+      });
+
+      const accessToken = response?.data?.access_token;
+      if (!accessToken) {
+        throw new Error('No access token received from server');
+      }
+
+      setAuthToken(accessToken);
+
+      const meResponse = await api.get('/api/auth/me');
+      const backendUser = meResponse?.data || buildDemoUser(normalizedEmail);
+
+      await persistSession({
+        nextToken: accessToken,
+        nextUser: backendUser,
+        isDemo: false,
+      });
+
+      return {
+        success: true,
+        message: 'Login successful',
       };
     } catch (error) {
-      console.error('Storage error:', error);
-      return {
-        success: false,
-        message: 'Failed to save login data',
-      };
+      const statusCode = error?.response?.status;
+      if (statusCode === 400 || statusCode === 401 || statusCode === 422) {
+        setAuthToken(null);
+        return {
+          success: false,
+          message: error.message || 'Invalid email or password',
+        };
+      }
+
+      // Fallback to demo mode when backend is unavailable.
+      try {
+        const demoToken = `demo_token_${Date.now()}`;
+        const demoUser = buildDemoUser(normalizedEmail);
+
+        await persistSession({
+          nextToken: demoToken,
+          nextUser: demoUser,
+          isDemo: true,
+        });
+
+        return {
+          success: true,
+          message: 'Backend unavailable. Signed in with demo mode.',
+          demoMode: true,
+        };
+      } catch (storageError) {
+        console.error('Storage error:', storageError);
+        return {
+          success: false,
+          message: 'Failed to save login data',
+        };
+      }
     }
   };
 
@@ -102,52 +153,45 @@ export const AuthProvider = ({ children }) => {
       };
     }
 
-    console.log('Attempting registration...');
-    
-    // Always use demo mode for now (backend not configured)
-    console.log('Using demo mode - backend not required');
-    
-    // Create demo user from registration data
-    const demoUser = {
-      id: 1,
-      email: userData.email,
-      full_name: userData.full_name || 'Demo User',
-      mobile: userData.mobile || '9876543210',
-      city: userData.city || 'Ahmedabad',
-    };
-    
-    const demoToken = 'demo_token_' + Date.now();
-    
     try {
-      await AsyncStorage.setItem('token', demoToken);
-      await AsyncStorage.setItem('user', JSON.stringify(demoUser));
-      await AsyncStorage.setItem('demoMode', 'true');
-      
-      console.log('Demo registration successful');
-      
-      return { 
-        success: true, 
-        data: demoUser,
-        message: 'Registration successful (Demo Mode)' 
+      await api.post('/api/auth/register', {
+        full_name: userData.full_name,
+        email: userData.email.trim().toLowerCase(),
+        mobile: userData.mobile,
+        city: userData.city,
+        password: userData.password,
+      });
+
+      return {
+        success: true,
+        message: 'Registration successful. Please sign in.',
       };
     } catch (error) {
-      console.error('Storage error:', error);
+      // Keep app usable without backend: allow demo registration flow.
+      if (!error?.response) {
+        return {
+          success: true,
+          message: 'Backend unavailable. You can still sign in using demo mode.',
+        };
+      }
+
       return {
         success: false,
-        message: 'Failed to save registration data',
+        message: error.message || 'Registration failed. Please verify your details.',
       };
     }
   };
 
   const logout = async () => {
+    // Clear in-memory auth first so UI always exits immediately,
+    // even if local storage cleanup fails on a given platform.
+    setToken(null);
+    setUser(null);
+    setDemoMode(false);
+    setAuthToken(null);
+
     try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('demoMode');
-      setToken(null);
-      setUser(null);
-      setDemoMode(false);
-      delete api.defaults.headers.common['Authorization'];
+      await AsyncStorage.multiRemove(['token', 'user', 'demoMode']);
     } catch (error) {
       console.error('Logout error:', error);
     }

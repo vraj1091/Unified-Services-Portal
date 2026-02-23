@@ -1,325 +1,299 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Platform, Modal } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Platform,
+  Modal,
+  Alert,
+} from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useDocuments } from '../../context/DocumentContext';
+import mobileTheme from '../../theme/mobileTheme';
+
+const requiredDocuments = [
+  { id: 'identity', title: 'Identity Proof', subtitle: 'Aadhaar Card / PAN Card / Driving License', required: true },
+  { id: 'address', title: 'Address Proof', subtitle: 'Utility Bill / Rent Agreement', required: true },
+  { id: 'namechange', title: 'Name Change Proof', subtitle: 'Gazette / Affidavit (if applicable)', required: true },
+];
+
+const mapCategory = (docId) => {
+  if (docId === 'identity') return 'identity';
+  if (docId === 'address') return 'address';
+  return 'other';
+};
 
 const DocumentUploadScreen = ({ navigation, route }) => {
   const { service, provider } = route.params || {};
-  const [uploadedDocs, setUploadedDocs] = useState({});
   const { addDocument, documents } = useDocuments();
-  const [showDocumentPicker, setShowDocumentPicker] = useState(false);
+  const [uploadedDocs, setUploadedDocs] = useState({});
+  const [showPicker, setShowPicker] = useState(false);
   const [currentDocId, setCurrentDocId] = useState(null);
-  const [currentDocTitle, setCurrentDocTitle] = useState(null);
+  const [currentDocTitle, setCurrentDocTitle] = useState('');
 
-  const requiredDocuments = [
-    { id: 'identity', title: 'Identity Proof', subtitle: 'Aadhaar Card / PAN Card / Driving License', required: true },
-    { id: 'address', title: 'Address Proof', subtitle: 'Utility Bill / Rent Agreement', required: true },
-    { id: 'namechange', title: 'Name Change Proof', subtitle: 'Gazette / Affidavit', required: true },
-  ];
-
-  const handleUpload = (docId, docTitle) => {
-    console.log('Upload button clicked for:', docId, docTitle);
-    setCurrentDocId(docId);
-    setCurrentDocTitle(docTitle);
-    setShowDocumentPicker(true);
-  };
-
-  const handleSelectExistingDocument = (doc) => {
-    console.log('Selected existing document:', doc);
-    
-    const docData = {
-      name: doc.name,
-      size: doc.size || '0 MB',
-      method: 'existing',
-      date: new Date().toLocaleString(),
-      fileData: doc.fileData,
-      fileType: doc.fileType,
+  const progress = useMemo(() => {
+    const uploaded = requiredDocuments.filter((doc) => uploadedDocs[doc.id]).length;
+    return {
+      uploaded,
+      total: requiredDocuments.length,
+      percentage: (uploaded / requiredDocuments.length) * 100,
     };
-    
-    setUploadedDocs(prev => ({
-      ...prev,
-      [currentDocId]: docData
-    }));
-
-    setShowDocumentPicker(false);
-    
-    if (Platform.OS === 'web') {
-      alert(`✓ Document Selected!\n\n${doc.name} has been added`);
-    }
-  };
-
-  const handleUploadNewDocument = () => {
-    setShowDocumentPicker(false);
-    
-    if (Platform.OS === 'web') {
-      // Create a hidden file input element
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,.pdf';
-      input.style.display = 'none';
-      
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          console.log('File selected:', file.name);
-          
-          // Read file as data URL for preview
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const fileData = event.target.result;
-            const fileName = file.name;
-            const fileSize = file.size;
-            const fileType = file.type.includes('pdf') ? 'PDF' : 'JPG';
-            
-            const docData = {
-              name: fileName,
-              size: fileSize,
-              method: 'file',
-              date: new Date().toLocaleString(),
-              fileData: fileData,
-              fileType: file.type,
-            };
-            
-            setUploadedDocs(prev => ({
-              ...prev,
-              [currentDocId]: docData
-            }));
-
-            // Add to global documents
-            addDocument({
-              name: currentDocTitle,
-              category: currentDocId,
-              type: fileType,
-              size: (fileSize / 1024 / 1024).toFixed(2) + ' MB',
-              source: 'file',
-              serviceType: service?.title,
-              provider: provider?.name,
-              fileData: fileData,
-              fileType: file.type,
-            });
-
-            alert(`✓ Success!\n\nDocument uploaded: ${fileName}\nSize: ${(fileSize / 1024 / 1024).toFixed(2)} MB`);
-          };
-          
-          reader.readAsDataURL(file);
-        }
-        
-        // Clean up
-        document.body.removeChild(input);
-      };
-      
-      input.oncancel = () => {
-        console.log('Upload cancelled');
-        document.body.removeChild(input);
-      };
-      
-      // Add to DOM and trigger click
-      document.body.appendChild(input);
-      input.click();
-    }
-  };
-
-  const handleRemove = (docId) => {
-    console.log('Remove clicked for:', docId);
-    
-    if (Platform.OS === 'web') {
-      if (window.confirm('Remove this document?')) {
-        const newDocs = { ...uploadedDocs };
-        delete newDocs[docId];
-        setUploadedDocs(newDocs);
-        window.alert('✓ Document removed');
-      }
-    }
-  };
-
-  const handleContinue = () => {
-    console.log('Continue clicked');
-    
-    if (canContinue) {
-      navigation.navigate('FinalForm', { service, provider, documents: uploadedDocs });
-    } else {
-      if (Platform.OS === 'web') {
-        window.alert(`⚠️ Missing Documents\n\nPlease upload all ${progress.total} required documents`);
-      }
-    }
-  };
-
-  const formatSize = (bytes) => {
-    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
-  };
-
-  const progress = {
-    uploaded: requiredDocuments.filter(doc => uploadedDocs[doc.id]).length,
-    total: requiredDocuments.length,
-  };
+  }, [uploadedDocs]);
 
   const canContinue = progress.uploaded === progress.total;
 
+  const startUpload = (docId, docTitle) => {
+    setCurrentDocId(docId);
+    setCurrentDocTitle(docTitle);
+    setShowPicker(true);
+  };
+
+  const handleSelectExistingDocument = (doc) => {
+    setUploadedDocs((prev) => ({
+      ...prev,
+      [currentDocId]: {
+        name: doc.name,
+        size: doc.size || '0 MB',
+        method: 'existing',
+        date: new Date().toLocaleString(),
+        fileData: doc.fileData || null,
+        fileType: doc.fileType || null,
+        uri: doc.uri || null,
+      },
+    }));
+    setShowPicker(false);
+    Alert.alert('Selected', `${doc.name} added to ${currentDocTitle}.`);
+  };
+
+  const saveUploadedDoc = (file) => {
+    const sizeInMb = `${((file.size || 0) / 1024 / 1024).toFixed(2)} MB`;
+    const isPdf = (file.fileType || '').toLowerCase().includes('pdf');
+    const type = isPdf ? 'PDF' : 'Image';
+
+    setUploadedDocs((prev) => ({
+      ...prev,
+      [currentDocId]: {
+        name: file.name,
+        size: sizeInMb,
+        method: 'new',
+        date: new Date().toLocaleString(),
+        fileData: file.fileData || null,
+        fileType: file.fileType || null,
+        uri: file.uri || null,
+      },
+    }));
+
+    addDocument({
+      name: file.name,
+      category: mapCategory(currentDocId),
+      type,
+      size: sizeInMb,
+      source: 'file',
+      serviceType: service?.title,
+      provider: provider?.name,
+      fileData: file.fileData || null,
+      fileType: file.fileType || null,
+      uri: file.uri || null,
+    });
+  };
+
+  const uploadFromWeb = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,.pdf';
+    input.style.display = 'none';
+
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) {
+        document.body.removeChild(input);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        saveUploadedDoc({
+          name: file.name,
+          size: file.size,
+          fileData: event.target.result,
+          fileType: file.type,
+        });
+        Alert.alert('Uploaded', `${file.name} uploaded successfully.`);
+      };
+      reader.readAsDataURL(file);
+      setShowPicker(false);
+      document.body.removeChild(input);
+    };
+
+    document.body.appendChild(input);
+    input.click();
+  };
+
+  const uploadFromNative = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets?.length) return;
+      const file = result.assets[0];
+
+      saveUploadedDoc({
+        name: file.name,
+        size: file.size,
+        fileType: file.mimeType,
+        uri: file.uri,
+      });
+      setShowPicker(false);
+      Alert.alert('Uploaded', `${file.name} uploaded successfully.`);
+    } catch (error) {
+      Alert.alert('Upload Failed', 'Please try again.');
+    }
+  };
+
+  const handleUploadNewDocument = async () => {
+    if (Platform.OS === 'web') {
+      uploadFromWeb();
+      return;
+    }
+    await uploadFromNative();
+  };
+
+  const handleRemove = (docId) => {
+    Alert.alert('Remove Document', 'Remove selected file for this requirement?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          setUploadedDocs((prev) => {
+            const next = { ...prev };
+            delete next[docId];
+            return next;
+          });
+        },
+      },
+    ]);
+  };
+
+  const handleContinue = () => {
+    if (!canContinue) {
+      Alert.alert('Missing Documents', `Please upload ${progress.total - progress.uploaded} more document(s).`);
+      return;
+    }
+
+    navigation.navigate('FinalForm', { service, provider, documents: uploadedDocs });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Document Picker Modal */}
-      <Modal
-        visible={showDocumentPicker}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowDocumentPicker(false)}
-      >
+      <Modal visible={showPicker} animationType="slide" transparent onRequestClose={() => setShowPicker(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Document</Text>
-              <TouchableOpacity
-                onPress={() => setShowDocumentPicker(false)}
-                style={styles.modalCloseButton}
-              >
-                <Text style={styles.modalCloseText}>✕</Text>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHead}>
+              <Text style={styles.modalTitle}>Choose Document Source</Text>
+              <TouchableOpacity onPress={() => setShowPicker(false)}>
+                <Ionicons name="close" size={22} color={mobileTheme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody}>
-              {/* Upload New Option */}
-              <TouchableOpacity
-                onPress={handleUploadNewDocument}
-                style={styles.uploadNewOption}
-                activeOpacity={0.7}
-              >
-                <View style={styles.uploadNewIcon}>
-                  <Text style={styles.uploadNewIconText}>+</Text>
-                </View>
-                <View style={styles.uploadNewInfo}>
-                  <Text style={styles.uploadNewTitle}>Upload New Document</Text>
-                  <Text style={styles.uploadNewSubtitle}>Choose from device</Text>
-                </View>
-              </TouchableOpacity>
+            <TouchableOpacity style={styles.modalPrimaryRow} onPress={handleUploadNewDocument} activeOpacity={0.85}>
+              <View style={styles.modalPrimaryIcon}>
+                <Ionicons name="cloud-upload-outline" size={20} color={mobileTheme.colors.textOnPrimary} />
+              </View>
+              <View style={styles.modalPrimaryBody}>
+                <Text style={styles.modalPrimaryTitle}>Upload New File</Text>
+                <Text style={styles.modalPrimarySubtitle}>Select from device storage</Text>
+              </View>
+            </TouchableOpacity>
 
-              {/* Existing Documents */}
-              {documents.length > 0 && (
-                <>
-                  <Text style={styles.sectionLabel}>Or select from uploaded documents:</Text>
-                  {documents.map((doc) => (
-                    <TouchableOpacity
-                      key={doc.id}
-                      onPress={() => handleSelectExistingDocument(doc)}
-                      style={styles.existingDocOption}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.existingDocIcon}>
-                        <Text style={styles.existingDocIconText}>
-                          {doc.type === 'PDF' ? '📄' : '🖼'}
-                        </Text>
-                      </View>
-                      <View style={styles.existingDocInfo}>
-                        <Text style={styles.existingDocTitle}>{doc.name}</Text>
-                        <Text style={styles.existingDocSubtitle}>
-                          {doc.type} • {doc.size} • {doc.uploadedDate}
-                        </Text>
-                      </View>
-                      <Text style={styles.selectArrow}>→</Text>
-                    </TouchableOpacity>
-                  ))}
-                </>
-              )}
-
-              {documents.length === 0 && (
-                <View style={styles.noDocsMessage}>
-                  <Text style={styles.noDocsText}>
-                    No documents uploaded yet. Upload a new document to get started.
-                  </Text>
-                </View>
+            <Text style={styles.modalSectionTitle}>Existing Documents</Text>
+            <ScrollView style={styles.modalList} showsVerticalScrollIndicator={false}>
+              {documents.length === 0 ? (
+                <Text style={styles.modalEmpty}>No previously uploaded documents.</Text>
+              ) : (
+                documents.map((doc) => (
+                  <TouchableOpacity
+                    key={doc.id}
+                    style={styles.modalItem}
+                    onPress={() => handleSelectExistingDocument(doc)}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons
+                      name={doc.type === 'PDF' ? 'document-text-outline' : 'image-outline'}
+                      size={18}
+                      color={mobileTheme.colors.primary}
+                    />
+                    <View style={styles.modalItemBody}>
+                      <Text numberOfLines={1} style={styles.modalItemTitle}>{doc.name}</Text>
+                      <Text style={styles.modalItemMeta}>{doc.type} • {doc.size}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={mobileTheme.colors.textTertiary} />
+                  </TouchableOpacity>
+                ))
               )}
             </ScrollView>
           </View>
         </View>
       </Modal>
 
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
-          style={styles.backButton}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.backText}>← Back</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
+        <View style={styles.headerBody}>
           <Text style={styles.headerTitle}>Upload Documents</Text>
-          <Text style={styles.headerSubtitle}>
-            {provider?.name || 'Provider'} • {service?.title || 'Service'}
-          </Text>
+          <Text style={styles.headerSubtitle}>{provider?.name || 'Provider'} • {service?.title || 'Service'}</Text>
         </View>
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        {/* Progress */}
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.progressCard}>
-          <Text style={styles.progressTitle}>
-            Progress: {progress.uploaded}/{progress.total}
-          </Text>
-          <View style={styles.progressBarBg}>
-            <View 
-              style={[
-                styles.progressBarFill, 
-                { width: `${(progress.uploaded / progress.total) * 100}%` }
-              ]} 
-            />
+          <Text style={styles.progressTitle}>Progress {progress.uploaded}/{progress.total}</Text>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressBar, { width: `${progress.percentage}%` }]} />
           </View>
           <Text style={styles.progressText}>
-            {canContinue ? '✓ All documents uploaded!' : `${progress.total - progress.uploaded} more needed`}
+            {canContinue ? 'All documents uploaded.' : `${progress.total - progress.uploaded} document(s) remaining.`}
           </Text>
         </View>
 
-        {/* Documents */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Required Documents</Text>
-          
           {requiredDocuments.map((doc) => {
             const uploaded = uploadedDocs[doc.id];
-            
             return (
               <View key={doc.id} style={styles.docCard}>
-                <View style={styles.docHeader}>
-                  <View style={[styles.badge, uploaded && styles.badgeSuccess]}>
-                    <Text style={styles.badgeText}>
-                      {uploaded ? '✓' : doc.title.charAt(0)}
-                    </Text>
+                <View style={styles.docHead}>
+                  <View style={[styles.docBadge, uploaded && styles.docBadgeDone]}>
+                    <Ionicons name={uploaded ? 'checkmark' : 'document-text-outline'} size={16} color={mobileTheme.colors.textOnPrimary} />
                   </View>
-                  <View style={styles.docInfo}>
+                  <View style={styles.docBody}>
                     <Text style={styles.docTitle}>{doc.title}</Text>
                     <Text style={styles.docSubtitle}>{doc.subtitle}</Text>
                   </View>
                 </View>
 
                 {uploaded ? (
-                  <View style={styles.uploadedBox}>
-                    <Text style={styles.uploadedText}>
-                      📄 {uploaded.name}
-                    </Text>
-                    <Text style={styles.uploadedMeta}>
-                      {formatSize(uploaded.size)} • {uploaded.method} • {uploaded.date}
-                    </Text>
-                    <View style={styles.buttonRow}>
-                      <TouchableOpacity
-                        onPress={() => handleUpload(doc.id, doc.title)}
-                        style={styles.replaceButton}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.replaceButtonText}>Replace</Text>
+                  <View style={styles.uploadedCard}>
+                    <Text style={styles.uploadedName}>{uploaded.name}</Text>
+                    <Text style={styles.uploadedMeta}>{uploaded.size} • {uploaded.method}</Text>
+                    <View style={styles.uploadedActions}>
+                      <TouchableOpacity style={styles.secondaryButton} onPress={() => startUpload(doc.id, doc.title)}>
+                        <Text style={styles.secondaryButtonText}>Replace</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => handleRemove(doc.id)}
-                        style={styles.removeButton}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.removeButtonText}>Remove</Text>
+                      <TouchableOpacity style={styles.deleteButton} onPress={() => handleRemove(doc.id)}>
+                        <Text style={styles.deleteButtonText}>Remove</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                 ) : (
-                  <TouchableOpacity
-                    onPress={() => handleUpload(doc.id, doc.title)}
-                    style={styles.uploadButton}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.uploadButtonText}>Upload Document +</Text>
+                  <TouchableOpacity style={styles.primaryButton} onPress={() => startUpload(doc.id, doc.title)}>
+                    <Text style={styles.primaryButtonText}>Upload Document</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -327,21 +301,15 @@ const DocumentUploadScreen = ({ navigation, route }) => {
           })}
         </View>
 
-        {/* Continue */}
         <View style={styles.section}>
           <TouchableOpacity
+            style={[styles.continueButton, !canContinue && styles.continueButtonDisabled]}
             onPress={handleContinue}
             disabled={!canContinue}
-            style={[styles.continueButton, !canContinue && styles.continueButtonDisabled]}
-            activeOpacity={0.7}
           >
-            <Text style={styles.continueButtonText}>
-              {canContinue ? 'Continue to Form →' : `Upload ${progress.total - progress.uploaded} More`}
-            </Text>
+            <Text style={styles.continueButtonText}>{canContinue ? 'Continue to Final Form' : 'Complete Uploads to Continue'}</Text>
           </TouchableOpacity>
         </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -350,339 +318,277 @@ const DocumentUploadScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: mobileTheme.colors.background,
   },
   header: {
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingTop: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    gap: mobileTheme.spacing.sm,
   },
-  backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginRight: 8,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.primarySoft,
   },
-  backText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E40AF',
-  },
-  headerContent: {
+  headerBody: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0F172A',
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: '#475569',
     marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  scrollView: {
+  scroll: {
     flex: 1,
   },
   progressCard: {
-    margin: 16,
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.lg,
+    borderRadius: mobileTheme.radius.lg,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.md,
   },
   progressTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginBottom: 8,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  progressBarBg: {
+  progressTrack: {
+    marginTop: mobileTheme.spacing.sm,
     height: 8,
-    backgroundColor: '#E2E8F0',
     borderRadius: 4,
+    backgroundColor: '#DFE6F2',
     overflow: 'hidden',
-    marginBottom: 8,
   },
-  progressBarFill: {
+  progressBar: {
     height: '100%',
-    backgroundColor: '#1E40AF',
+    backgroundColor: mobileTheme.colors.primary,
   },
   progressText: {
-    fontSize: 14,
-    color: '#475569',
+    marginTop: mobileTheme.spacing.sm,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
   section: {
-    paddingHorizontal: 16,
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 12,
+    marginTop: mobileTheme.spacing.lg,
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingBottom: mobileTheme.spacing.lg,
   },
   docCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: mobileTheme.radius.lg,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    padding: mobileTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.md,
   },
-  docHeader: {
+  docHead: {
     flexDirection: 'row',
-    marginBottom: 12,
   },
-  badge: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: '#1E40AF',
+  docBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    backgroundColor: mobileTheme.colors.primary,
+    marginRight: mobileTheme.spacing.md,
   },
-  badgeSuccess: {
-    backgroundColor: '#10B981',
+  docBadgeDone: {
+    backgroundColor: mobileTheme.colors.success,
   },
-  badgeText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  docInfo: {
+  docBody: {
     flex: 1,
-    justifyContent: 'center',
   },
   docTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginBottom: 4,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
   docSubtitle: {
-    fontSize: 14,
-    color: '#475569',
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  uploadedBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    padding: 12,
+  uploadedCard: {
+    marginTop: mobileTheme.spacing.md,
+    padding: mobileTheme.spacing.sm,
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.surfaceMuted,
   },
-  uploadedText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginBottom: 4,
+  uploadedName: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
   uploadedMeta: {
-    fontSize: 12,
-    color: '#475569',
-    marginBottom: 12,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  buttonRow: {
+  uploadedActions: {
+    marginTop: mobileTheme.spacing.sm,
     flexDirection: 'row',
-    gap: 8,
+    gap: mobileTheme.spacing.sm,
   },
-  uploadButton: {
-    width: '100%',
-    padding: 14,
-    borderRadius: 8,
-    backgroundColor: '#1E40AF',
+  primaryButton: {
+    marginTop: mobileTheme.spacing.md,
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: mobileTheme.spacing.sm,
   },
-  uploadButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+  primaryButtonText: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontWeight: mobileTheme.typography.semibold,
+    fontSize: mobileTheme.typography.small,
   },
-  replaceButton: {
+  secondaryButton: {
     flex: 1,
-    padding: 10,
-    borderRadius: 6,
+    borderRadius: mobileTheme.radius.md,
     borderWidth: 1,
-    borderColor: '#1E40AF',
-    backgroundColor: '#FFFFFF',
+    borderColor: mobileTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: mobileTheme.spacing.sm,
   },
-  replaceButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E40AF',
+  secondaryButtonText: {
+    color: mobileTheme.colors.primary,
+    fontWeight: mobileTheme.typography.semibold,
+    fontSize: mobileTheme.typography.caption,
   },
-  removeButton: {
+  deleteButton: {
     flex: 1,
-    padding: 10,
-    borderRadius: 6,
+    borderRadius: mobileTheme.radius.md,
     borderWidth: 1,
-    borderColor: '#EF4444',
-    backgroundColor: '#FFFFFF',
+    borderColor: mobileTheme.colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: mobileTheme.spacing.sm,
   },
-  removeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#EF4444',
+  deleteButtonText: {
+    color: mobileTheme.colors.danger,
+    fontWeight: mobileTheme.typography.semibold,
+    fontSize: mobileTheme.typography.caption,
   },
   continueButton: {
-    width: '100%',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#1E40AF',
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: mobileTheme.spacing.md,
   },
   continueButtonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: '#9AA9C9',
   },
   continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    color: mobileTheme.colors.textOnPrimary,
+    fontWeight: mobileTheme.typography.semibold,
+    fontSize: mobileTheme.typography.small,
   },
-  // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
+    backgroundColor: 'rgba(8, 15, 30, 0.45)',
   },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+  modalCard: {
     maxHeight: '80%',
+    backgroundColor: mobileTheme.colors.surface,
+    borderTopLeftRadius: mobileTheme.radius.xl,
+    borderTopRightRadius: mobileTheme.radius.xl,
+    padding: mobileTheme.spacing.lg,
   },
-  modalHeader: {
+  modalHead: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    justifyContent: 'space-between',
+    marginBottom: mobileTheme.spacing.md,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0F172A',
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h3,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  modalCloseButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseText: {
-    fontSize: 20,
-    color: '#475569',
-    fontWeight: '600',
-  },
-  modalBody: {
-    padding: 20,
-  },
-  uploadNewOption: {
+  modalPrimaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF2FF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#6366F1',
-    borderStyle: 'dashed',
+    borderRadius: mobileTheme.radius.lg,
+    backgroundColor: mobileTheme.colors.primarySoft,
+    padding: mobileTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.md,
   },
-  uploadNewIcon: {
-    width: 56,
-    height: 56,
+  modalPrimaryIcon: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    backgroundColor: '#6366F1',
+    backgroundColor: mobileTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: mobileTheme.spacing.sm,
   },
-  uploadNewIconText: {
-    fontSize: 32,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  uploadNewInfo: {
+  modalPrimaryBody: {
     flex: 1,
   },
-  uploadNewTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginBottom: 4,
+  modalPrimaryTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  uploadNewSubtitle: {
-    fontSize: 14,
-    color: '#475569',
+  modalPrimarySubtitle: {
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 12,
+  modalSectionTitle: {
+    marginBottom: mobileTheme.spacing.sm,
+    color: mobileTheme.colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    fontSize: mobileTheme.typography.caption,
+    fontWeight: mobileTheme.typography.semibold,
   },
-  existingDocOption: {
+  modalList: {
+    maxHeight: 280,
+  },
+  modalEmpty: {
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
+  },
+  modalItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: mobileTheme.colors.border,
+    borderRadius: mobileTheme.radius.md,
+    padding: mobileTheme.spacing.sm,
+    marginBottom: mobileTheme.spacing.sm,
   },
-  existingDocIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  existingDocIconText: {
-    fontSize: 24,
-  },
-  existingDocInfo: {
+  modalItemBody: {
     flex: 1,
+    marginLeft: mobileTheme.spacing.sm,
   },
-  existingDocTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginBottom: 4,
+  modalItemTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.medium,
   },
-  existingDocSubtitle: {
-    fontSize: 12,
-    color: '#64748B',
-  },
-  selectArrow: {
-    fontSize: 20,
-    color: '#1E40AF',
-    fontWeight: '600',
-  },
-  noDocsMessage: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  noDocsText: {
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 20,
+  modalItemMeta: {
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
 });
 

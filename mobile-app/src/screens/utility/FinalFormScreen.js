@@ -9,13 +9,17 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { colors, spacing, typography, borderRadius, shadows } from '../../theme/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import mobileTheme from '../../theme/mobileTheme';
 
 const FinalFormScreen = ({ navigation, route }) => {
   const { user } = useAuth();
-  const { service, provider } = route.params || {};
-  
+  const { service, provider, documents } = route.params || {};
+  const serviceTitle = service?.title || 'Service Application';
+  const providerName = provider?.name || 'Government Portal';
+
   const [formData, setFormData] = useState({
     fullName: user?.full_name || '',
     email: user?.email || '',
@@ -23,426 +27,317 @@ const FinalFormScreen = ({ navigation, route }) => {
     address: '',
     city: user?.city || '',
     pincode: '',
-    connectionType: 'New',
+    requestType: 'Standard',
     remarks: '',
   });
 
-  const handleSubmit = () => {
-    if (!formData.fullName || !formData.email || !formData.mobile || !formData.address || !formData.city || !formData.pincode) {
-      Alert.alert('Error', 'Please fill in all required fields');
+  const updateField = (key, value) => setFormData((prev) => ({ ...prev, [key]: value }));
+
+  const requiredFields = ['fullName', 'email', 'mobile', 'address', 'city', 'pincode'];
+
+  const handleSubmit = async () => {
+    const missing = requiredFields.some((field) => !formData[field]);
+    if (missing) {
+      Alert.alert('Incomplete Form', 'Please fill all required fields before submitting.');
       return;
     }
 
-    Alert.alert(
-      'Application Submitted!',
-      `Your ${service?.title || 'service'} application has been submitted successfully. Application ID: APP${Date.now().toString().slice(-6)}`,
-      [
-        {
-          text: 'View Applications',
-          onPress: () => navigation.navigate('Applications'),
-        },
-        {
-          text: 'Go to Dashboard',
-          onPress: () => navigation.navigate('Dashboard'),
-        },
-      ]
-    );
+    const applicationNumber = `APP${Date.now().toString().slice(-8)}`;
+    const newApplication = {
+      id: Date.now(),
+      application_number: applicationNumber,
+      service_type: serviceTitle,
+      provider: providerName,
+      status: 'submitted',
+      created_at: new Date().toISOString(),
+      request_type: formData.requestType,
+    };
+
+    try {
+      const stored = await AsyncStorage.getItem('localApplications');
+      const previous = stored ? JSON.parse(stored) : [];
+      await AsyncStorage.setItem('localApplications', JSON.stringify([newApplication, ...previous]));
+    } catch (error) {
+      // Keep flow non-blocking if storage fails.
+    }
+
+    Alert.alert('Application Submitted', `${serviceTitle} request submitted successfully.\nApplication No: ${applicationNumber}`, [
+      {
+        text: 'View Applications',
+        onPress: () => navigation.navigate('MainTabs', { screen: 'Applications' }),
+      },
+      {
+        text: 'Back to Home',
+        onPress: () => navigation.navigate('MainTabs', { screen: 'Home' }),
+      },
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backIcon}>←</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Application Form</Text>
-          <Text style={styles.headerSubtitle}>
-            {service?.title || 'Service Application'}
-          </Text>
+        <View style={styles.headerBody}>
+          <Text style={styles.headerTitle}>Final Application Form</Text>
+          <Text style={styles.headerSubtitle}>{serviceTitle}</Text>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Progress */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressStep}>
-            <View style={[styles.progressDot, styles.progressDotActive]}>
-              <Text style={styles.progressDotText}>1</Text>
-            </View>
-            <Text style={styles.progressLabel}>Service</Text>
-          </View>
-          <View style={styles.progressLine} />
-          <View style={styles.progressStep}>
-            <View style={[styles.progressDot, styles.progressDotActive]}>
-              <Text style={styles.progressDotText}>2</Text>
-            </View>
-            <Text style={styles.progressLabel}>Provider</Text>
-          </View>
-          <View style={styles.progressLine} />
-          <View style={styles.progressStep}>
-            <View style={[styles.progressDot, styles.progressDotActive]}>
-              <Text style={styles.progressDotText}>3</Text>
-            </View>
-            <Text style={styles.progressLabel}>Documents</Text>
-          </View>
-          <View style={styles.progressLine} />
-          <View style={styles.progressStep}>
-            <View style={[styles.progressDot, styles.progressDotCurrent]}>
-              <Text style={styles.progressDotText}>4</Text>
-            </View>
-            <Text style={styles.progressLabel}>Submit</Text>
-          </View>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.summaryCard}>
+          <SummaryRow label="Service" value={serviceTitle} />
+          <SummaryRow label="Provider" value={providerName} />
+          <SummaryRow label="Documents" value={`${documents ? Object.keys(documents).length : 0} attached`} />
         </View>
 
-        {/* Form */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-          
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Full Name *</Text>
+          <Text style={styles.sectionTitle}>Personal Details</Text>
+          <Field label="Full Name *">
+            <TextInput style={styles.input} value={formData.fullName} onChangeText={(v) => updateField('fullName', v)} />
+          </Field>
+          <Field label="Email *">
             <TextInput
               style={styles.input}
-              placeholder="Enter your full name"
-              value={formData.fullName}
-              onChangeText={(text) => setFormData({ ...formData, fullName: text })}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text })}
               keyboardType="email-address"
               autoCapitalize="none"
+              value={formData.email}
+              onChangeText={(v) => updateField('email', v)}
             />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Mobile Number *</Text>
+          </Field>
+          <Field label="Mobile Number *">
             <TextInput
               style={styles.input}
-              placeholder="Enter your mobile number"
-              value={formData.mobile}
-              onChangeText={(text) => setFormData({ ...formData, mobile: text })}
               keyboardType="phone-pad"
               maxLength={10}
+              value={formData.mobile}
+              onChangeText={(v) => updateField('mobile', v)}
             />
-          </View>
+          </Field>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Address Details</Text>
-          
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Full Address *</Text>
+          <Field label="Full Address *">
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Enter your complete address"
+              multiline
+              numberOfLines={3}
               value={formData.address}
-              onChangeText={(text) => setFormData({ ...formData, address: text })}
-              multiline
-              numberOfLines={3}
+              onChangeText={(v) => updateField('address', v)}
+              textAlignVertical="top"
             />
-          </View>
-
+          </Field>
           <View style={styles.row}>
-            <View style={[styles.inputContainer, styles.halfWidth]}>
-              <Text style={styles.label}>City *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="City"
-                value={formData.city}
-                onChangeText={(text) => setFormData({ ...formData, city: text })}
-              />
+            <View style={styles.rowItem}>
+              <Field label="City *">
+                <TextInput style={styles.input} value={formData.city} onChangeText={(v) => updateField('city', v)} />
+              </Field>
             </View>
-
-            <View style={[styles.inputContainer, styles.halfWidth]}>
-              <Text style={styles.label}>Pincode *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Pincode"
-                value={formData.pincode}
-                onChangeText={(text) => setFormData({ ...formData, pincode: text })}
-                keyboardType="number-pad"
-                maxLength={6}
-              />
+            <View style={styles.rowItem}>
+              <Field label="Pincode *">
+                <TextInput
+                  style={styles.input}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  value={formData.pincode}
+                  onChangeText={(v) => updateField('pincode', v)}
+                />
+              </Field>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Connection Details</Text>
-          
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Connection Type *</Text>
-            <View style={styles.radioGroup}>
-              {['New', 'Transfer', 'Upgrade'].map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  onPress={() => setFormData({ ...formData, connectionType: type })}
-                  style={[
-                    styles.radioButton,
-                    formData.connectionType === type && styles.radioButtonActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.radioButtonText,
-                      formData.connectionType === type && styles.radioButtonTextActive,
-                    ]}
-                  >
-                    {type}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+          <Text style={styles.sectionTitle}>Request Preferences</Text>
+          <View style={styles.chipRow}>
+            {['Standard', 'Priority', 'Urgent'].map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={[styles.chip, formData.requestType === item && styles.chipActive]}
+                onPress={() => updateField('requestType', item)}
+              >
+                <Text style={[styles.chipText, formData.requestType === item && styles.chipTextActive]}>{item}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Additional Remarks</Text>
+          <Field label="Remarks">
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Any additional information..."
-              value={formData.remarks}
-              onChangeText={(text) => setFormData({ ...formData, remarks: text })}
               multiline
               numberOfLines={3}
+              value={formData.remarks}
+              onChangeText={(v) => updateField('remarks', v)}
+              textAlignVertical="top"
             />
-          </View>
+          </Field>
         </View>
 
-        {/* Summary */}
         <View style={styles.section}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Application Summary</Text>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Service:</Text>
-              <Text style={styles.summaryValue}>{service?.title || 'N/A'}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Provider:</Text>
-              <Text style={styles.summaryValue}>{provider?.name || 'N/A'}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Connection Type:</Text>
-              <Text style={styles.summaryValue}>{formData.connectionType}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Submit Button */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            onPress={handleSubmit}
-            activeOpacity={0.7}
-            style={styles.submitButton}
-          >
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.86}>
             <Text style={styles.submitButtonText}>Submit Application</Text>
           </TouchableOpacity>
         </View>
-
-        <View style={{ height: spacing.xxl }} />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+const Field = ({ label, children }) => (
+  <View style={styles.field}>
+    <Text style={styles.fieldLabel}>{label}</Text>
+    {children}
+  </View>
+);
+
+const SummaryRow = ({ label, value }) => (
+  <View style={styles.summaryRow}>
+    <Text style={styles.summaryLabel}>{label}</Text>
+    <Text style={styles.summaryValue}>{value}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neutral.bg,
+    backgroundColor: mobileTheme.colors.background,
   },
   header: {
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingTop: mobileTheme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.neutral.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral.border,
+    gap: mobileTheme.spacing.sm,
   },
-  backButton: {
-    marginRight: spacing.sm,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: mobileTheme.colors.primarySoft,
   },
-  backIcon: {
-    fontSize: typography.h2,
-    color: colors.text.primary,
-  },
-  headerContent: {
+  headerBody: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: typography.h3,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
   },
   headerSubtitle: {
-    fontSize: typography.tiny,
-    color: colors.text.secondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
   },
-  progressContainer: {
+  scroll: {
+    flex: 1,
+  },
+  summaryCard: {
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.lg,
+    borderRadius: mobileTheme.radius.lg,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    paddingHorizontal: mobileTheme.spacing.md,
+  },
+  summaryRow: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
-    ...shadows.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: mobileTheme.colors.border,
   },
-  progressStep: {
-    alignItems: 'center',
+  summaryLabel: {
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
   },
-  progressDot: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.neutral.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  progressDotActive: {
-    backgroundColor: colors.status.success,
-  },
-  progressDotCurrent: {
-    backgroundColor: colors.primary.main,
-  },
-  progressDotText: {
-    fontSize: typography.small,
-    fontWeight: typography.bold,
-    color: colors.text.inverse,
-  },
-  progressLabel: {
-    fontSize: typography.tiny,
-    fontWeight: typography.semibold,
-    color: colors.text.secondary,
-  },
-  progressLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: colors.neutral.border,
-    marginHorizontal: spacing.sm,
+  summaryValue: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
   section: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: mobileTheme.spacing.lg,
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingBottom: mobileTheme.spacing.sm,
   },
   sectionTitle: {
-    fontSize: typography.h3,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h3,
+    fontWeight: mobileTheme.typography.bold,
+    marginBottom: mobileTheme.spacing.md,
   },
-  inputContainer: {
-    marginBottom: spacing.md,
+  field: {
+    marginBottom: mobileTheme.spacing.md,
   },
-  label: {
-    fontSize: typography.small,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
+  fieldLabel: {
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
+    marginBottom: 6,
+    fontWeight: mobileTheme.typography.semibold,
   },
   input: {
-    height: 50,
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.md,
-    fontSize: typography.body,
+    minHeight: 48,
+    borderRadius: mobileTheme.radius.md,
     borderWidth: 1,
-    borderColor: colors.neutral.border,
-    color: colors.text.primary,
+    borderColor: mobileTheme.colors.border,
+    backgroundColor: mobileTheme.colors.surface,
+    color: mobileTheme.colors.textPrimary,
+    paddingHorizontal: mobileTheme.spacing.md,
   },
   textArea: {
-    height: 100,
-    paddingTop: spacing.md,
-    textAlignVertical: 'top',
+    paddingTop: mobileTheme.spacing.sm,
+    minHeight: 92,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: mobileTheme.spacing.sm,
   },
-  halfWidth: {
-    width: '48%',
-  },
-  radioGroup: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  radioButton: {
+  rowItem: {
     flex: 1,
-    height: 44,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
-    backgroundColor: colors.neutral.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  radioButtonActive: {
-    borderColor: colors.primary.main,
-    backgroundColor: colors.primary.bg,
-  },
-  radioButtonText: {
-    fontSize: typography.small,
-    fontWeight: typography.semibold,
-    color: colors.text.secondary,
-  },
-  radioButtonTextActive: {
-    color: colors.primary.main,
-  },
-  summaryCard: {
-    backgroundColor: colors.neutral.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.neutral.border,
-    ...shadows.sm,
-  },
-  summaryTitle: {
-    fontSize: typography.h4,
-    fontWeight: typography.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
-  },
-  summaryRow: {
+  chipRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    gap: mobileTheme.spacing.sm,
+    marginBottom: mobileTheme.spacing.md,
   },
-  summaryLabel: {
-    fontSize: typography.small,
-    color: colors.text.secondary,
+  chip: {
+    flex: 1,
+    borderRadius: mobileTheme.radius.full,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: mobileTheme.colors.surface,
   },
-  summaryValue: {
-    fontSize: typography.small,
-    fontWeight: typography.semibold,
-    color: colors.text.primary,
+  chipActive: {
+    borderColor: mobileTheme.colors.primary,
+    backgroundColor: mobileTheme.colors.primarySoft,
+  },
+  chipText: {
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.caption,
+    fontWeight: mobileTheme.typography.semibold,
+  },
+  chipTextActive: {
+    color: mobileTheme.colors.primary,
   },
   submitButton: {
-    backgroundColor: colors.primary.main,
-    height: 56,
-    borderRadius: borderRadius.md,
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.md,
+    paddingVertical: mobileTheme.spacing.md,
+    marginBottom: mobileTheme.spacing.xxxl,
   },
   submitButtonText: {
-    fontSize: typography.h4,
-    fontWeight: typography.semibold,
-    color: colors.text.inverse,
+    color: mobileTheme.colors.textOnPrimary,
+    fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
   },
 });
 
