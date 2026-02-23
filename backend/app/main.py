@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import json
 from app.database import engine, Base
 from app.routers import auth, users, services, applications, services_api, whatsapp, documents, services_data, portal_redirect, proxy, grants, admin, automation
 from app.config import get_settings
@@ -15,11 +16,33 @@ app = FastAPI(
     version="1.0.0"
 )
 
+def parse_cors_origins():
+    raw_value = settings.BACKEND_CORS_ORIGINS
+    if not raw_value:
+        return ["*"], False
+
+    try:
+        parsed = json.loads(raw_value)
+        if isinstance(parsed, list) and parsed:
+            has_wildcard = "*" in parsed
+            return parsed, not has_wildcard
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    fallback = [origin.strip() for origin in str(raw_value).split(",") if origin.strip()]
+    if not fallback:
+        fallback = ["*"]
+
+    has_wildcard = "*" in fallback
+    return fallback, not has_wildcard
+
+cors_origins, allow_credentials = parse_cors_origins()
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

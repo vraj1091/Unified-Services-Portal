@@ -1,7 +1,17 @@
 import axios from 'axios';
 
-// Dynamic API base URL - works for localhost and EC2
+const normalizeApiBaseUrl = (url) => {
+  const cleaned = (url || '').trim().replace(/\/+$/, '');
+  if (!cleaned) return '';
+  if (cleaned.endsWith('/api')) return cleaned;
+  return `${cleaned}/api`;
+};
+
+// Dynamic API base URL - works for Render and local development
 const getApiBaseUrl = () => {
+  const envApiUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
+  if (envApiUrl) return envApiUrl;
+
   const hostname = window.location.hostname;
   
   // Development
@@ -9,8 +19,8 @@ const getApiBaseUrl = () => {
     return 'http://localhost:8000/api';
   }
   
-  // Production - use same hostname with port 8000
-  return `http://${hostname}:8000/api`;
+  // Fallback to same-origin API path for proxied deployments
+  return '/api';
 };
 
 const api = axios.create({
