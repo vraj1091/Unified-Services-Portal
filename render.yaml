@@ -35,7 +35,7 @@ services:
       - key: FRONTEND_URL
         value: https://gujarat-portal-frontend.onrender.com
       - key: BACKEND_CORS_ORIGINS
-        value: '["https://gujarat-portal-frontend.onrender.com"]'
+        value: '["*"]'
       - key: BACKEND_CORS_ORIGIN_REGEX
         value: '^https://.*\.onrender\.com$|^https?://(localhost|127\.0\.0\.1)(:\d+)?$'
 

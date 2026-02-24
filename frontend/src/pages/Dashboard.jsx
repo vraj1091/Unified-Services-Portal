@@ -43,7 +43,7 @@ const Dashboard = () => {
   const fetchStats = async () => {
     try {
       const appsRes = await api.get('/applications/');
-      const applications = appsRes.data || [];
+      const applications = Array.isArray(appsRes.data) ? appsRes.data : [];
       const pending = applications.filter(a => ['pending', 'draft', 'processing'].includes(a.status)).length;
       const completed = applications.filter(a => a.status === 'completed').length;
 

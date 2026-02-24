@@ -7,7 +7,6 @@ export const useInstallPrompt = () => {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault()
       setInstallPrompt(e)
       setIsInstallable(true)
     }

@@ -25,17 +25,8 @@ const getApiBaseUrls = () => {
     return [...new Set(envApiUrls)];
   }
 
-  if (hostname.includes('-frontend')) {
-    const derivedBackendHost = hostname.replace('-frontend', '-backend');
-    if (derivedBackendHost !== hostname) {
-      envApiUrls.push(`https://${derivedBackendHost}/api`);
-    }
-  }
-
   // Known backend host fallback for Render.
   envApiUrls.push('https://gujarat-portal-backend.onrender.com/api');
-  // Same-origin API fallback for proxied deployments.
-  envApiUrls.push('/api');
 
   return [...new Set(envApiUrls)];
 };

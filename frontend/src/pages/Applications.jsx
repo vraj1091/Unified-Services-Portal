@@ -16,9 +16,10 @@ const Applications = () => {
     try {
       setLoading(true);
       const response = await api.get('/applications/');
-      setApplications(response.data || []);
+      setApplications(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Failed to fetch applications');
+      setApplications([]);
     } finally {
       setLoading(false);
     }
