@@ -41,7 +41,7 @@ const FinalFormScreen = ({ navigation, route }) => {
     () => [
       'Uploading your details',
       'Connecting to department portal',
-      'Running automation workflow',
+      'Running application workflow',
       'Finalizing submission',
     ],
     []
@@ -166,7 +166,7 @@ const FinalFormScreen = ({ navigation, route }) => {
         <View style={styles.progressOverlay}>
           <View style={styles.progressCard}>
             <ActivityIndicator size="large" color={mobileTheme.colors.primary} />
-            <Text style={styles.progressTitle}>Automation Running</Text>
+            <Text style={styles.progressTitle}>Application Running</Text>
             <Text style={styles.progressText}>{submitStages[submitStageIndex]}</Text>
             {!!activeApplicationNo && (
               <Text style={styles.progressMeta}>Application No: {activeApplicationNo}</Text>
