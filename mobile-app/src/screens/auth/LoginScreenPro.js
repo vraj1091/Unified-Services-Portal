@@ -138,19 +138,20 @@ const styles = StyleSheet.create({
   hero: {
     borderRadius: mobileTheme.radius.xl,
     padding: mobileTheme.spacing.xl,
+    paddingBottom: mobileTheme.spacing.xxl,
   },
   logoWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 64,
+    height: 64,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: mobileTheme.spacing.lg,
   },
   logoImage: {
-    width: 36,
-    height: 36,
+    width: 46,
+    height: 46,
   },
   heroTitle: {
     color: mobileTheme.colors.textOnPrimary,
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   card: {
-    marginTop: -18,
+    marginTop: 14,
     backgroundColor: mobileTheme.colors.surface,
     borderRadius: mobileTheme.radius.xl,
     borderWidth: 1,
