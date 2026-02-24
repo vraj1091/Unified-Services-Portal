@@ -36,6 +36,11 @@ const LoginScreenPro = ({ navigation }) => {
 
     if (!result.success) {
       Alert.alert('Login Failed', result.message || 'Please try again.');
+      return;
+    }
+
+    if (result.demoMode) {
+      Alert.alert('Offline Mode', result.message || 'You are signed in without live backend connection.');
     }
   };
 

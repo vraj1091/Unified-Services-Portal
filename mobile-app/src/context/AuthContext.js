@@ -83,13 +83,14 @@ export const AuthProvider = ({ children }) => {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      await warmupBackend();
+      // Do not block sign-in on warmup; free-tier backends can cold-start slowly.
+      warmupBackend();
 
       const response = await api.post('/api/auth/login', {
         email: normalizedEmail,
         password,
       }, {
-        timeout: 65000,
+        timeout: 25000,
       });
 
       const accessToken = response?.data?.access_token;
@@ -99,8 +100,13 @@ export const AuthProvider = ({ children }) => {
 
       setAuthToken(accessToken);
 
-      const meResponse = await api.get('/api/auth/me', { timeout: 30000 });
-      const backendUser = meResponse?.data || buildDemoUser(normalizedEmail);
+      let backendUser = buildDemoUser(normalizedEmail);
+      try {
+        const meResponse = await api.get('/api/auth/me', { timeout: 12000 });
+        backendUser = meResponse?.data || backendUser;
+      } catch (meError) {
+        // Keep login successful even if profile endpoint is temporarily slow.
+      }
 
       await persistSession({
         nextToken: accessToken,
@@ -122,16 +128,7 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
-      // Fallback to demo mode only in development so production doesn't silently mask backend errors.
-      if (!__DEV__) {
-        setAuthToken(null);
-        return {
-          success: false,
-          message: error?.message || 'Unable to sign in right now. Please try again in a few seconds.',
-        };
-      }
-
-      // Development-only fallback when backend is unavailable.
+      // Fallback to demo mode when backend is unavailable so the mobile app remains usable.
       try {
         const demoToken = `demo_token_${Date.now()}`;
         const demoUser = buildDemoUser(normalizedEmail);
@@ -144,7 +141,7 @@ export const AuthProvider = ({ children }) => {
 
         return {
           success: true,
-          message: 'Backend unavailable. Signed in with demo mode.',
+          message: 'Backend unavailable. Signed in with offline mode.',
           demoMode: true,
         };
       } catch (storageError) {

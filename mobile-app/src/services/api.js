@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_URL } from '../config';
+import { API_URL, API_URLS } from '../config';
 
 // Check if we're in development mode
 const isDevelopment = __DEV__;
@@ -11,6 +11,13 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+const nextBaseUrl = (currentBase) => {
+  if (!Array.isArray(API_URLS) || API_URLS.length < 2) return null;
+  const currentIndex = API_URLS.findIndex((url) => currentBase?.startsWith(url));
+  const nextIndex = currentIndex >= 0 ? currentIndex + 1 : 1;
+  return API_URLS[nextIndex] || null;
+};
 
 export const warmupBackend = async () => {
   try {
@@ -41,6 +48,26 @@ api.interceptors.request.use(
     if (isDevelopment) {
       console.error('Request Error:', error.message);
     }
+    const originalRequest = error?.config;
+    const shouldRetryBaseSwitch =
+      originalRequest &&
+      !originalRequest.__baseSwitched &&
+      (!error.response && (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || error.message === 'Network Error'));
+
+    if (shouldRetryBaseSwitch) {
+      const currentBase = originalRequest.baseURL || api.defaults.baseURL;
+      const fallbackBase = nextBaseUrl(currentBase);
+      if (fallbackBase) {
+        originalRequest.__baseSwitched = true;
+        originalRequest.baseURL = fallbackBase;
+        api.defaults.baseURL = fallbackBase;
+        if (isDevelopment) {
+          console.log('Retrying request with fallback base URL:', fallbackBase);
+        }
+        return api.request(originalRequest);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

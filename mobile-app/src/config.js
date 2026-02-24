@@ -43,5 +43,28 @@ const getDefaultApiUrl = () => {
 };
 
 const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+const configuredUrls = process.env.EXPO_PUBLIC_API_URLS
+  ?.split(',')
+  .map((value) => value.trim())
+  .filter(Boolean) || [];
 
-export const API_URL = trimTrailingSlash(configuredUrl || getDefaultApiUrl());
+const getWebDerivedUrl = () => {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
+  const host = window.location?.hostname || '';
+  if (!host.includes('onrender.com')) return null;
+
+  // Example: gujarat-portal-mobile.onrender.com -> gujarat-portal-backend.onrender.com
+  const backendHost = host.replace('-mobile', '-backend');
+  if (backendHost === host) return null;
+  return `https://${backendHost}`;
+};
+
+const candidates = [
+  ...configuredUrls,
+  configuredUrl,
+  getWebDerivedUrl(),
+  getDefaultApiUrl(),
+].filter(Boolean).map(trimTrailingSlash);
+
+export const API_URLS = [...new Set(candidates)];
+export const API_URL = API_URLS[0];
