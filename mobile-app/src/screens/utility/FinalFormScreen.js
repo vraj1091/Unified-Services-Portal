@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +34,31 @@ const FinalFormScreen = ({ navigation, route }) => {
     remarks: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [submitStageIndex, setSubmitStageIndex] = useState(0);
+  const [activeApplicationNo, setActiveApplicationNo] = useState('');
+
+  const submitStages = useMemo(
+    () => [
+      'Uploading your details',
+      'Connecting to department portal',
+      'Running automation workflow',
+      'Finalizing submission',
+    ],
+    []
+  );
+
+  useEffect(() => {
+    if (!submitting) {
+      setSubmitStageIndex(0);
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      setSubmitStageIndex((prev) => Math.min(prev + 1, submitStages.length - 1));
+    }, 1400);
+
+    return () => clearInterval(interval);
+  }, [submitting, submitStages.length]);
 
   const updateField = (key, value) => setFormData((prev) => ({ ...prev, [key]: value }));
 
@@ -69,6 +96,7 @@ const FinalFormScreen = ({ navigation, route }) => {
     }
 
     const applicationNumber = `APP${Date.now().toString().slice(-8)}`;
+    setActiveApplicationNo(applicationNumber);
     const newApplication = {
       id: Date.now(),
       application_number: applicationNumber,
@@ -134,6 +162,19 @@ const FinalFormScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Modal visible={submitting} transparent animationType="fade" onRequestClose={() => {}}>
+        <View style={styles.progressOverlay}>
+          <View style={styles.progressCard}>
+            <ActivityIndicator size="large" color={mobileTheme.colors.primary} />
+            <Text style={styles.progressTitle}>Automation Running</Text>
+            <Text style={styles.progressText}>{submitStages[submitStageIndex]}</Text>
+            {!!activeApplicationNo && (
+              <Text style={styles.progressMeta}>Application No: {activeApplicationNo}</Text>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
           <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
@@ -404,6 +445,42 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: mobileTheme.colors.textOnPrimary,
     fontSize: mobileTheme.typography.small,
+    fontWeight: mobileTheme.typography.semibold,
+  },
+  progressOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(8, 15, 30, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: mobileTheme.spacing.lg,
+  },
+  progressCard: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: mobileTheme.radius.xl,
+    backgroundColor: mobileTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    alignItems: 'center',
+    paddingHorizontal: mobileTheme.spacing.lg,
+    paddingVertical: mobileTheme.spacing.xl,
+  },
+  progressTitle: {
+    marginTop: mobileTheme.spacing.md,
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h2,
+    fontWeight: mobileTheme.typography.bold,
+  },
+  progressText: {
+    marginTop: mobileTheme.spacing.xs,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
+    textAlign: 'center',
+  },
+  progressMeta: {
+    marginTop: mobileTheme.spacing.md,
+    color: mobileTheme.colors.textTertiary,
+    fontSize: mobileTheme.typography.caption,
     fontWeight: mobileTheme.typography.semibold,
   },
 });
