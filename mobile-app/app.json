@@ -1,15 +1,30 @@
 {
-    "expo": {
-        "name": "gujarat-unified-services-portal-mobile",
-        "slug": "gujarat-unified-services-portal-mobile",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "userInterfaceStyle": "light",
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true
-        }
+  "expo": {
+    "name": "Gujarat Unified Services Portal",
+    "slug": "gujarat-unified-services-portal-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#214CC8"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "Gujarat Services Portal",
+      "shortName": "GujaratPortal",
+      "backgroundColor": "#F1F5F9",
+      "themeColor": "#214CC8",
+      "display": "standalone"
     }
+  }
 }

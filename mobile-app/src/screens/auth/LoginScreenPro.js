@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import mobileTheme from '../../theme/mobileTheme';
+import InstallAppBanner from '../../components/InstallAppBanner';
 
 const LoginScreenPro = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -101,6 +102,8 @@ const LoginScreenPro = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
             </View>
+
+            <InstallAppBanner />
 
             <Text style={styles.bottomText}>Government of Gujarat | Encrypted session</Text>
           </View>

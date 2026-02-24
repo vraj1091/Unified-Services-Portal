@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import mobileTheme from '../theme/mobileTheme';
+import InstallAppBanner from '../components/InstallAppBanner';
 
 const DashboardScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -74,6 +75,10 @@ const DashboardScreen = ({ navigation }) => {
             <Text style={styles.heroAvatarText}>{displayName.charAt(0).toUpperCase()}</Text>
           </TouchableOpacity>
         </LinearGradient>
+
+        <View style={styles.installWrap}>
+          <InstallAppBanner />
+        </View>
 
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
@@ -194,8 +199,12 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: mobileTheme.spacing.lg,
-    marginTop: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.md,
     gap: mobileTheme.spacing.md,
+  },
+  installWrap: {
+    marginHorizontal: mobileTheme.spacing.lg,
+    marginTop: mobileTheme.spacing.md,
   },
   statCard: {
     flex: 1,
