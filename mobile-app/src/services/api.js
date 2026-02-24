@@ -6,11 +6,20 @@ const isDevelopment = __DEV__;
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000, // Reduced timeout for faster failure
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+export const warmupBackend = async () => {
+  try {
+    await api.get('/api/health', { timeout: 15000 });
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 export const setAuthToken = (token) => {
   if (token) {
@@ -29,7 +38,9 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('Request Error:', error.message);
+    if (isDevelopment) {
+      console.error('Request Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );
@@ -45,10 +56,14 @@ api.interceptors.response.use(
   (error) => {
     // Handle different types of errors
     if (error.code === 'ECONNABORTED') {
-      console.error('Request timeout - Backend not responding');
+      if (isDevelopment) {
+        console.error('Request timeout - Backend not responding');
+      }
       error.message = 'Connection timeout. Please check if backend is running.';
     } else if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      console.error('Network error - Cannot reach backend');
+      if (isDevelopment) {
+        console.error('Network error - Cannot reach backend');
+      }
       error.message = 'Cannot connect to server. Please check your connection.';
     } else if (error.response) {
       // Server responded with error

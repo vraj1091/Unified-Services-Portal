@@ -32,7 +32,11 @@ const getDefaultApiUrl = () => {
   }
 
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.hostname) {
-    return `http://${window.location.hostname}:${DEFAULT_BACKEND_PORT}`;
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return `http://${host}:${DEFAULT_BACKEND_PORT}`;
+    }
+    return 'https://gujarat-portal-backend.onrender.com';
   }
 
   return 'http://localhost:8000';

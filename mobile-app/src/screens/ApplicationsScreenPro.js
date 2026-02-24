@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import mobileTheme from '../theme/mobileTheme';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const fallbackApplications = [
   {
@@ -35,6 +36,7 @@ const fallbackApplications = [
 ];
 
 const ApplicationsScreenPro = () => {
+  const { demoMode } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,11 +45,13 @@ const ApplicationsScreenPro = () => {
   const fetchApplications = async () => {
     try {
       let remote = [];
-      try {
-        const response = await api.get('/api/applications/');
-        remote = Array.isArray(response.data) ? response.data : [];
-      } catch (error) {
-        remote = [];
+      if (!demoMode) {
+        try {
+          const response = await api.get('/api/applications/');
+          remote = Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+          remote = [];
+        }
       }
 
       let local = [];

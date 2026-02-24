@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api, { setAuthToken } from '../services/api';
+import api, { setAuthToken, warmupBackend } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -83,9 +83,13 @@ export const AuthProvider = ({ children }) => {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
+      await warmupBackend();
+
       const response = await api.post('/api/auth/login', {
         email: normalizedEmail,
         password,
+      }, {
+        timeout: 65000,
       });
 
       const accessToken = response?.data?.access_token;
@@ -95,7 +99,7 @@ export const AuthProvider = ({ children }) => {
 
       setAuthToken(accessToken);
 
-      const meResponse = await api.get('/api/auth/me');
+      const meResponse = await api.get('/api/auth/me', { timeout: 30000 });
       const backendUser = meResponse?.data || buildDemoUser(normalizedEmail);
 
       await persistSession({
@@ -118,7 +122,16 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
-      // Fallback to demo mode when backend is unavailable.
+      // Fallback to demo mode only in development so production doesn't silently mask backend errors.
+      if (!__DEV__) {
+        setAuthToken(null);
+        return {
+          success: false,
+          message: error?.message || 'Unable to sign in right now. Please try again in a few seconds.',
+        };
+      }
+
+      // Development-only fallback when backend is unavailable.
       try {
         const demoToken = `demo_token_${Date.now()}`;
         const demoUser = buildDemoUser(normalizedEmail);
