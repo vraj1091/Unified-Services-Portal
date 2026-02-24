@@ -52,7 +52,7 @@ const LoginScreenPro = ({ navigation }) => {
           <View style={styles.contentWrap}>
             <LinearGradient colors={['#214CC8', '#173A9F']} style={styles.hero}>
               <View style={styles.logoWrap}>
-                <Image source={require('../../../assets/icon-192.png')} style={styles.logoImage} resizeMode="contain" />
+                <Image source={require('../../../assets/icon.png')} style={styles.logoImage} resizeMode="contain" />
               </View>
               <Text style={styles.heroTitle}>Unified Portal</Text>
               <Text style={styles.heroSubtitle}>Secure digital access to government services</Text>
@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
     marginBottom: mobileTheme.spacing.lg,
   },
   logoImage: {
-    width: 30,
-    height: 30,
+    width: 36,
+    height: 36,
   },
   heroTitle: {
     color: mobileTheme.colors.textOnPrimary,
