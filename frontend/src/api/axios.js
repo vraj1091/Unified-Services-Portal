@@ -7,25 +7,44 @@ const normalizeApiBaseUrl = (url) => {
   return `${cleaned}/api`;
 };
 
-// Dynamic API base URL - works for Render and local development
-const getApiBaseUrl = () => {
+const getApiBaseUrls = () => {
+  const envApiUrls = (import.meta.env.VITE_API_URLS || '')
+    .split(',')
+    .map((value) => normalizeApiBaseUrl(value))
+    .filter(Boolean);
+
   const envApiUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
-  if (envApiUrl) return envApiUrl;
+  if (envApiUrl) {
+    envApiUrls.unshift(envApiUrl);
+  }
 
   const hostname = window.location.hostname;
-  
-  // Development
+
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:8000/api';
+    envApiUrls.push('http://localhost:8000/api');
+    return [...new Set(envApiUrls)];
   }
-  
-  // Fallback to same-origin API path for proxied deployments
-  return '/api';
+
+  if (hostname.includes('-frontend')) {
+    const derivedBackendHost = hostname.replace('-frontend', '-backend');
+    if (derivedBackendHost !== hostname) {
+      envApiUrls.push(`https://${derivedBackendHost}/api`);
+    }
+  }
+
+  // Known backend host fallback for Render.
+  envApiUrls.push('https://gujarat-portal-backend.onrender.com/api');
+  // Same-origin API fallback for proxied deployments.
+  envApiUrls.push('/api');
+
+  return [...new Set(envApiUrls)];
 };
 
+const apiBaseUrls = getApiBaseUrls();
+
 const api = axios.create({
-  baseURL: getApiBaseUrl(),
-  timeout: 30000,
+  baseURL: apiBaseUrls[0],
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -58,6 +77,28 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const originalRequest = error.config;
+    const isNetworkIssue =
+      !error.response &&
+      (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || error.message === 'Network Error');
+
+    if (isNetworkIssue && originalRequest && !originalRequest.__baseSwitched) {
+      if (originalRequest.disableBaseRetry) {
+        return Promise.reject(error);
+      }
+
+      const currentBase = originalRequest.baseURL || api.defaults.baseURL;
+      const currentIndex = apiBaseUrls.findIndex((url) => currentBase?.startsWith(url));
+      const fallbackBase = apiBaseUrls[currentIndex + 1];
+
+      if (fallbackBase) {
+        originalRequest.__baseSwitched = true;
+        originalRequest.baseURL = fallbackBase;
+        api.defaults.baseURL = fallbackBase;
+        return api.request(originalRequest);
+      }
+    }
+
     const requestUrl = error.config?.url || '';
     const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
     const hasToken = !!localStorage.getItem('token');

@@ -20,6 +20,9 @@ const Login = () => {
     const result = await login(email, password);
 
     if (result.success) {
+      if (result.offlineMode) {
+        window.alert('Backend is currently unavailable. You are signed in with offline mode.');
+      }
       navigate('/');
     } else {
       setError(result.error);

@@ -6,7 +6,7 @@ const isDevelopment = __DEV__;
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -21,7 +21,7 @@ const nextBaseUrl = (currentBase) => {
 
 export const warmupBackend = async () => {
   try {
-    await api.get('/api/health', { timeout: 15000 });
+    await api.get('/api/health', { timeout: 5000, disableBaseRetry: true });
     return true;
   } catch (error) {
     return false;
@@ -48,26 +48,6 @@ api.interceptors.request.use(
     if (isDevelopment) {
       console.error('Request Error:', error.message);
     }
-    const originalRequest = error?.config;
-    const shouldRetryBaseSwitch =
-      originalRequest &&
-      !originalRequest.__baseSwitched &&
-      (!error.response && (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || error.message === 'Network Error'));
-
-    if (shouldRetryBaseSwitch) {
-      const currentBase = originalRequest.baseURL || api.defaults.baseURL;
-      const fallbackBase = nextBaseUrl(currentBase);
-      if (fallbackBase) {
-        originalRequest.__baseSwitched = true;
-        originalRequest.baseURL = fallbackBase;
-        api.defaults.baseURL = fallbackBase;
-        if (isDevelopment) {
-          console.log('Retrying request with fallback base URL:', fallbackBase);
-        }
-        return api.request(originalRequest);
-      }
-    }
-
     return Promise.reject(error);
   }
 );
@@ -81,6 +61,25 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    const originalRequest = error?.config;
+    const shouldRetryBaseSwitch =
+      originalRequest &&
+      !originalRequest.__baseSwitched &&
+      !originalRequest.disableBaseRetry &&
+      !error.response &&
+      (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || error.message === 'Network Error');
+
+    if (shouldRetryBaseSwitch) {
+      const currentBase = originalRequest.baseURL || api.defaults.baseURL;
+      const fallbackBase = nextBaseUrl(currentBase);
+      if (fallbackBase) {
+        originalRequest.__baseSwitched = true;
+        originalRequest.baseURL = fallbackBase;
+        api.defaults.baseURL = fallbackBase;
+        return api.request(originalRequest);
+      }
+    }
+
     // Handle different types of errors
     if (error.code === 'ECONNABORTED') {
       if (isDevelopment) {
@@ -95,7 +94,9 @@ api.interceptors.response.use(
     } else if (error.response) {
       // Server responded with error
       if (error.response.status === 401) {
-        console.log('Unauthorized access');
+        if (isDevelopment) {
+          console.log('Unauthorized access');
+        }
         error.message = 'Invalid credentials. Please try again.';
       } else if (error.response.status === 404) {
         error.message = 'Resource not found.';
@@ -103,7 +104,9 @@ api.interceptors.response.use(
         error.message = 'Server error. Please try again later.';
       }
     } else {
-      console.error('Unknown error:', error.message);
+      if (isDevelopment) {
+        console.error('Unknown error:', error.message);
+      }
     }
     
     return Promise.reject(error);

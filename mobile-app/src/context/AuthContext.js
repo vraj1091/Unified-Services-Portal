@@ -90,7 +90,8 @@ export const AuthProvider = ({ children }) => {
         email: normalizedEmail,
         password,
       }, {
-        timeout: 25000,
+        timeout: 10000,
+        disableBaseRetry: true,
       });
 
       const accessToken = response?.data?.access_token;
@@ -102,7 +103,7 @@ export const AuthProvider = ({ children }) => {
 
       let backendUser = buildDemoUser(normalizedEmail);
       try {
-        const meResponse = await api.get('/api/auth/me', { timeout: 12000 });
+        const meResponse = await api.get('/api/auth/me', { timeout: 6000, disableBaseRetry: true });
         backendUser = meResponse?.data || backendUser;
       } catch (meError) {
         // Keep login successful even if profile endpoint is temporarily slow.

@@ -10,14 +10,14 @@
   "start_url": "/",
   "icons": [
     {
-      "src": "/ashoka-emblem.webp",
+      "src": "/pwa-192x192.png",
       "sizes": "192x192",
-      "type": "image/webp"
+      "type": "image/png"
     },
     {
-      "src": "/ashoka-emblem.webp", 
+      "src": "/pwa-512x512.png", 
       "sizes": "512x512",
-      "type": "image/webp"
+      "type": "image/png"
     }
   ]
 }
