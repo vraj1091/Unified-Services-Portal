@@ -19,9 +19,10 @@ import mobileTheme from '../../theme/mobileTheme';
 
 const FinalFormScreen = ({ navigation, route }) => {
   const { user } = useAuth();
-  const { service, provider, documents } = route.params || {};
+  const { service, provider, facility, documents } = route.params || {};
   const serviceTitle = service?.title || 'Service Application';
   const providerName = provider?.name || 'Government Portal';
+  const facilityTitle = facility?.title || 'Name Change';
 
   const [formData, setFormData] = useState({
     fullName: user?.full_name || '',
@@ -114,10 +115,12 @@ const FinalFormScreen = ({ navigation, route }) => {
       const serviceType = resolveServiceType();
       const createResponse = await api.post('/api/applications/', {
         service_type: serviceType,
-        application_type: 'mobile_final_form_submission',
+        application_type: facility?.id || 'mobile_final_form_submission',
         form_data: {
           service_id: service?.id || null,
           service_title: serviceTitle,
+          facility_id: facility?.id || 'name-change',
+          facility_title: facilityTitle,
           provider_id: provider?.id || null,
           provider_name: providerName,
           documents_attached: documents ? Object.keys(documents).length : 0,
@@ -181,13 +184,14 @@ const FinalFormScreen = ({ navigation, route }) => {
         </TouchableOpacity>
         <View style={styles.headerBody}>
           <Text style={styles.headerTitle}>Final Application Form</Text>
-          <Text style={styles.headerSubtitle}>{serviceTitle}</Text>
+          <Text style={styles.headerSubtitle}>{serviceTitle} - {facilityTitle}</Text>
         </View>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.summaryCard}>
           <SummaryRow label="Service" value={serviceTitle} />
+          <SummaryRow label="Facility" value={facilityTitle} />
           <SummaryRow label="Provider" value={providerName} />
           <SummaryRow label="Documents" value={`${documents ? Object.keys(documents).length : 0} attached`} />
         </View>

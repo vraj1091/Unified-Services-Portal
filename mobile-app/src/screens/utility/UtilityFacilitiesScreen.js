@@ -1,42 +1,54 @@
 import React from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
+  Alert,
   SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import mobileTheme from '../../theme/mobileTheme';
 
-const UtilityServicesScreen = ({ navigation }) => {
-  const services = [
-    {
-      id: 'electricity',
-      title: 'Electricity Connection',
-      description: 'New connection, transfer, or load upgrade.',
-      icon: 'flash-outline',
-    },
-    {
-      id: 'gas',
-      title: 'Gas Connection',
-      description: 'Piped gas service for home and business.',
-      icon: 'flame-outline',
-    },
-    {
-      id: 'water',
-      title: 'Water Connection',
-      description: 'Municipal and local authority supply setup.',
-      icon: 'water-outline',
-    },
-    {
-      id: 'property',
-      title: 'Property Services',
-      description: 'Property utility links and tax service support.',
-      icon: 'home-outline',
-    },
-  ];
+const facilityOptions = [
+  {
+    id: 'name-change',
+    title: 'Name Change',
+    subtitle: 'Update applicant name in existing service connection.',
+    icon: 'document-text-outline',
+    active: true,
+  },
+  {
+    id: 'new-connection',
+    title: 'New Connection',
+    subtitle: 'Apply for a fresh service connection.',
+    icon: 'add-circle-outline',
+    active: false,
+  },
+  {
+    id: 'transfer',
+    title: 'Transfer Connection',
+    subtitle: 'Transfer existing service to another address.',
+    icon: 'swap-horizontal-outline',
+    active: false,
+  },
+];
+
+const UtilityFacilitiesScreen = ({ navigation, route }) => {
+  const { service } = route.params || {};
+
+  const handleSelectFacility = (facility) => {
+    if (!facility.active) {
+      Alert.alert('Coming Soon', `${facility.title} will be available shortly.`);
+      return;
+    }
+
+    navigation.navigate('ServiceProviders', {
+      service,
+      facility,
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,28 +56,37 @@ const UtilityServicesScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
           <Ionicons name="arrow-back" size={20} color={mobileTheme.colors.primary} />
         </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Utility Services</Text>
-          <Text style={styles.headerSubtitle}>Choose service type to continue</Text>
+        <View style={styles.headerBody}>
+          <Text style={styles.headerTitle}>{service?.title || 'Utility'} Facilities</Text>
+          <Text style={styles.headerSubtitle}>Select facility to continue</Text>
         </View>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          {services.map((service) => (
+          {facilityOptions.map((facility) => (
             <TouchableOpacity
-              key={service.id}
-              style={styles.serviceCard}
+              key={facility.id}
+              style={[styles.facilityCard, !facility.active && styles.facilityCardDisabled]}
               activeOpacity={0.86}
-              onPress={() => navigation.navigate('UtilityFacilities', { service })}
+              onPress={() => handleSelectFacility(facility)}
             >
-              <View style={styles.serviceIconWrap}>
-                <Ionicons name={service.icon} size={20} color={mobileTheme.colors.primary} />
+              <View style={styles.facilityIconWrap}>
+                <Ionicons
+                  name={facility.icon}
+                  size={20}
+                  color={facility.active ? mobileTheme.colors.primary : mobileTheme.colors.textTertiary}
+                />
               </View>
-              <View style={styles.serviceBody}>
-                <Text style={styles.serviceTitle}>{service.title}</Text>
-                <Text style={styles.serviceDescription}>{service.description}</Text>
+
+              <View style={styles.facilityBody}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.facilityTitle}>{facility.title}</Text>
+                  {!facility.active && <Text style={styles.tag}>Coming Soon</Text>}
+                </View>
+                <Text style={styles.facilitySubtitle}>{facility.subtitle}</Text>
               </View>
+
               <Ionicons name="chevron-forward" size={16} color={mobileTheme.colors.textTertiary} />
             </TouchableOpacity>
           ))}
@@ -73,7 +94,7 @@ const UtilityServicesScreen = ({ navigation }) => {
 
         <View style={styles.stepCard}>
           <Text style={styles.stepTitle}>How This Works</Text>
-          <Text style={styles.stepText}>1. Select service</Text>
+          <Text style={styles.stepText}>1. Select utility service</Text>
           <Text style={styles.stepText}>2. Select facility (Name Change, etc.)</Text>
           <Text style={styles.stepText}>3. Pick your provider</Text>
           <Text style={styles.stepText}>4. Upload required documents</Text>
@@ -104,6 +125,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: mobileTheme.colors.primarySoft,
   },
+  headerBody: {
+    flex: 1,
+  },
   headerTitle: {
     color: mobileTheme.colors.textPrimary,
     fontSize: mobileTheme.typography.h2,
@@ -121,7 +145,7 @@ const styles = StyleSheet.create({
     marginTop: mobileTheme.spacing.lg,
     paddingHorizontal: mobileTheme.spacing.lg,
   },
-  serviceCard: {
+  facilityCard: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: mobileTheme.radius.lg,
@@ -132,7 +156,10 @@ const styles = StyleSheet.create({
     marginBottom: mobileTheme.spacing.sm,
     ...mobileTheme.shadows.sm,
   },
-  serviceIconWrap: {
+  facilityCardDisabled: {
+    opacity: 0.7,
+  },
+  facilityIconWrap: {
     width: 40,
     height: 40,
     borderRadius: 12,
@@ -141,15 +168,26 @@ const styles = StyleSheet.create({
     backgroundColor: mobileTheme.colors.primarySoft,
     marginRight: mobileTheme.spacing.md,
   },
-  serviceBody: {
+  facilityBody: {
     flex: 1,
   },
-  serviceTitle: {
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: mobileTheme.spacing.xs,
+  },
+  facilityTitle: {
     color: mobileTheme.colors.textPrimary,
     fontSize: mobileTheme.typography.small,
     fontWeight: mobileTheme.typography.semibold,
   },
-  serviceDescription: {
+  tag: {
+    color: mobileTheme.colors.warning,
+    fontSize: 10,
+    fontWeight: mobileTheme.typography.bold,
+    textTransform: 'uppercase',
+  },
+  facilitySubtitle: {
     marginTop: 2,
     color: mobileTheme.colors.textSecondary,
     fontSize: mobileTheme.typography.caption,
@@ -178,4 +216,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UtilityServicesScreen;
+export default UtilityFacilitiesScreen;

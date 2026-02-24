@@ -20,6 +20,7 @@ import ApplicationsScreenPro from './src/screens/ApplicationsScreenPro';
 import DocumentsScreenPro from './src/screens/DocumentsScreenPro';
 import SupportScreen from './src/screens/SupportScreen';
 import UtilityServicesScreen from './src/screens/utility/UtilityServicesScreen';
+import UtilityFacilitiesScreen from './src/screens/utility/UtilityFacilitiesScreen';
 import ServiceProvidersScreen from './src/screens/utility/ServiceProvidersScreen';
 import DocumentUploadScreen from './src/screens/utility/DocumentUploadScreen';
 import FinalFormScreen from './src/screens/utility/FinalFormScreen';
@@ -108,6 +109,7 @@ function AppStack() {
     >
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="UtilityServices" component={UtilityServicesScreen} />
+      <Stack.Screen name="UtilityFacilities" component={UtilityFacilitiesScreen} />
       <Stack.Screen name="ServiceProviders" component={ServiceProvidersScreen} />
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
       <Stack.Screen name="FinalForm" component={FinalFormScreen} />

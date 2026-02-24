@@ -32,7 +32,7 @@ const providersData = {
 };
 
 const ServiceProvidersScreen = ({ navigation, route }) => {
-  const { service } = route.params || {};
+  const { service, facility } = route.params || {};
   const serviceType = service?.id || 'electricity';
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -50,7 +50,7 @@ const ServiceProvidersScreen = ({ navigation, route }) => {
     [providers, searchQuery]
   );
 
-  const title = `${service?.title || 'Service'} Providers`;
+  const title = `${service?.title || 'Service'} - ${facility?.title || 'Facility'}`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -82,7 +82,7 @@ const ServiceProvidersScreen = ({ navigation, route }) => {
               key={provider.id}
               style={styles.providerCard}
               activeOpacity={0.86}
-              onPress={() => navigation.navigate('DocumentUpload', { service, provider })}
+              onPress={() => navigation.navigate('DocumentUpload', { service, provider, facility })}
             >
               <View style={styles.rowTop}>
                 <View style={styles.logoWrap}>

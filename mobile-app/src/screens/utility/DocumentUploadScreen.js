@@ -28,7 +28,7 @@ const mapCategory = (docId) => {
 };
 
 const DocumentUploadScreen = ({ navigation, route }) => {
-  const { service, provider } = route.params || {};
+  const { service, provider, facility } = route.params || {};
   const { addDocument, documents } = useDocuments();
   const [uploadedDocs, setUploadedDocs] = useState({});
   const [showPicker, setShowPicker] = useState(false);
@@ -187,7 +187,7 @@ const DocumentUploadScreen = ({ navigation, route }) => {
       return;
     }
 
-    navigation.navigate('FinalForm', { service, provider, documents: uploadedDocs });
+    navigation.navigate('FinalForm', { service, provider, facility, documents: uploadedDocs });
   };
 
   return (
@@ -248,7 +248,7 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         </TouchableOpacity>
         <View style={styles.headerBody}>
           <Text style={styles.headerTitle}>Upload Documents</Text>
-          <Text style={styles.headerSubtitle}>{provider?.name || 'Provider'} • {service?.title || 'Service'}</Text>
+          <Text style={styles.headerSubtitle}>{provider?.name || 'Provider'} - {service?.title || 'Service'} - {facility?.title || 'Name Change'}</Text>
         </View>
       </View>
 
@@ -593,3 +593,4 @@ const styles = StyleSheet.create({
 });
 
 export default DocumentUploadScreen;
+
