@@ -30,16 +30,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      // Warm up Render free backend before auth request
+      await api.get('/health', { timeout: 15000 }).catch(() => null);
+
       const formData = new URLSearchParams();
       formData.append('username', email);
       formData.append('password', password);
       
       const response = await api.post('/auth/login', formData, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 65000
       });
       
       localStorage.setItem('token', response.data.access_token);
-      const meResponse = await api.get('/auth/me');
+      const meResponse = await api.get('/auth/me', { timeout: 30000 });
       setUser(meResponse.data);
       return { success: true };
     } catch (error) {

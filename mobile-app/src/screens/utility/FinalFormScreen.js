@@ -12,6 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import mobileTheme from '../../theme/mobileTheme';
 
 const FinalFormScreen = ({ navigation, route }) => {
@@ -30,15 +31,40 @@ const FinalFormScreen = ({ navigation, route }) => {
     requestType: 'Standard',
     remarks: '',
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const updateField = (key, value) => setFormData((prev) => ({ ...prev, [key]: value }));
 
   const requiredFields = ['fullName', 'email', 'mobile', 'address', 'city', 'pincode'];
 
+  const resolveServiceType = () => {
+    const rawId = (service?.id || '').toLowerCase();
+    if (['electricity', 'gas', 'water', 'property'].includes(rawId)) return rawId;
+
+    const rawTitle = (service?.title || '').toLowerCase();
+    if (rawTitle.includes('electric')) return 'electricity';
+    if (rawTitle.includes('gas')) return 'gas';
+    if (rawTitle.includes('water')) return 'water';
+    if (rawTitle.includes('property')) return 'property';
+    return 'electricity';
+  };
+
   const handleSubmit = async () => {
-    const missing = requiredFields.some((field) => !formData[field]);
+    if (submitting) return;
+
+    const missing = requiredFields.some((field) => !(formData[field] || '').toString().trim());
     if (missing) {
       Alert.alert('Incomplete Form', 'Please fill all required fields before submitting.');
+      return;
+    }
+
+    if (!/^\d{10}$/.test(formData.mobile.trim())) {
+      Alert.alert('Invalid Mobile', 'Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(formData.pincode.trim())) {
+      Alert.alert('Invalid Pincode', 'Please enter a valid 6-digit pincode.');
       return;
     }
 
@@ -54,23 +80,56 @@ const FinalFormScreen = ({ navigation, route }) => {
     };
 
     try {
+      setSubmitting(true);
+
+      // Submit to backend first so application is visible across devices/sessions.
+      const serviceType = resolveServiceType();
+      const createResponse = await api.post('/api/applications/', {
+        service_type: serviceType,
+        application_type: 'mobile_final_form_submission',
+        form_data: {
+          service_id: service?.id || null,
+          service_title: serviceTitle,
+          provider_id: provider?.id || null,
+          provider_name: providerName,
+          documents_attached: documents ? Object.keys(documents).length : 0,
+          request_type: formData.requestType,
+          remarks: formData.remarks || '',
+          applicant: {
+            full_name: formData.fullName.trim(),
+            email: formData.email.trim(),
+            mobile: formData.mobile.trim(),
+            address: formData.address.trim(),
+            city: formData.city.trim(),
+            pincode: formData.pincode.trim(),
+          },
+        },
+      });
+
+      const backendAppId = createResponse?.data?.id;
+      if (backendAppId) {
+        await api.post(`/api/applications/${backendAppId}/submit`);
+      }
+
       const stored = await AsyncStorage.getItem('localApplications');
       const previous = stored ? JSON.parse(stored) : [];
       await AsyncStorage.setItem('localApplications', JSON.stringify([newApplication, ...previous]));
     } catch (error) {
-      // Keep flow non-blocking if storage fails.
+      // Fallback to local save if backend is unavailable.
+      try {
+        const stored = await AsyncStorage.getItem('localApplications');
+        const previous = stored ? JSON.parse(stored) : [];
+        await AsyncStorage.setItem('localApplications', JSON.stringify([newApplication, ...previous]));
+      } catch (storageError) {
+        // no-op
+      }
+
+      Alert.alert('Submitted in Offline Mode', 'Backend is slow or unavailable. Your application is saved locally and visible in Applications.');
+    } finally {
+      setSubmitting(false);
     }
 
-    Alert.alert('Application Submitted', `${serviceTitle} request submitted successfully.\nApplication No: ${applicationNumber}`, [
-      {
-        text: 'View Applications',
-        onPress: () => navigation.navigate('MainTabs', { screen: 'Applications' }),
-      },
-      {
-        text: 'Back to Home',
-        onPress: () => navigation.navigate('MainTabs', { screen: 'Home' }),
-      },
-    ]);
+    navigation.navigate('MainTabs', { screen: 'Applications' });
   };
 
   return (
@@ -175,8 +234,13 @@ const FinalFormScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.86}>
-            <Text style={styles.submitButtonText}>Submit Application</Text>
+          <TouchableOpacity
+            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            activeOpacity={0.86}
+            disabled={submitting}
+          >
+            <Text style={styles.submitButtonText}>{submitting ? 'Submitting...' : 'Submit Application'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -333,6 +397,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: mobileTheme.spacing.md,
     marginBottom: mobileTheme.spacing.xxxl,
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
   },
   submitButtonText: {
     color: mobileTheme.colors.textOnPrimary,

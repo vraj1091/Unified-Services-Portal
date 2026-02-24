@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from datetime import timedelta
 from app.database import get_db
 from app.models import User
@@ -82,17 +83,17 @@ async def login(request: Request, db: Session = Depends(get_db)):
         
         if "application/json" in content_type:
             data = await request.json()
-            email = data.get("email") or data.get("username")
+            email = (data.get("email") or data.get("username") or "").strip()
             password = data.get("password")
         else:
             form_data = await request.form()
-            email = form_data.get("username") or form_data.get("email")
+            email = (form_data.get("username") or form_data.get("email") or "").strip()
             password = form_data.get("password")
         
         if not email or not password:
             raise HTTPException(status_code=422, detail="Email and password required")
         
-        user = db.query(User).filter(User.email == email).first()
+        user = db.query(User).filter(or_(User.email == email, User.mobile == email)).first()
         if not user or not verify_password(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
