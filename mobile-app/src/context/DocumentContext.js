@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DocumentContext = createContext();
+const DOCUMENTS_STORAGE_KEY = 'gujarat_portal_documents_v1';
 
 export const useDocuments = () => {
   const context = useContext(DocumentContext);
@@ -11,12 +13,56 @@ export const useDocuments = () => {
 };
 
 export const DocumentProvider = ({ children }) => {
-  // Start with EMPTY array - no documents until user uploads
   const [documents, setDocuments] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDocuments = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(DOCUMENTS_STORAGE_KEY);
+        if (!stored || !mounted) {
+          setIsLoaded(true);
+          return;
+        }
+
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setDocuments(parsed);
+        }
+      } catch (error) {
+        // Keep app usable even if persisted data is corrupted or storage fails.
+      } finally {
+        if (mounted) {
+          setIsLoaded(true);
+        }
+      }
+    };
+
+    loadDocuments();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const persistDocuments = async () => {
+      try {
+        await AsyncStorage.setItem(DOCUMENTS_STORAGE_KEY, JSON.stringify(documents));
+      } catch (error) {
+        // No-op: avoid blocking UI if persistence fails.
+      }
+    };
+
+    persistDocuments();
+  }, [documents, isLoaded]);
 
   const addDocument = (document) => {
     const newDoc = {
-      id: Date.now(),
+      id: document.id || Date.now(),
       name: document.name,
       category: document.category || 'other',
       type: document.type || 'PDF',
@@ -48,6 +94,7 @@ export const DocumentProvider = ({ children }) => {
     addDocument,
     removeDocument,
     getDocumentsByCategory,
+    isLoaded,
   };
 
   return (

@@ -19,7 +19,15 @@ import mobileTheme from '../theme/mobileTheme';
 const DocumentsScreenPro = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewingDocument, setViewingDocument] = useState(null);
-  const { documents, addDocument, removeDocument } = useDocuments();
+  const [showUploadCategoryModal, setShowUploadCategoryModal] = useState(false);
+  const [pendingUploadCategory, setPendingUploadCategory] = useState('other');
+  const { documents, addDocument, removeDocument, isLoaded } = useDocuments();
+  const uploadCategories = [
+    { key: 'identity', label: 'Identity' },
+    { key: 'address', label: 'Address' },
+    { key: 'financial', label: 'Financial' },
+    { key: 'other', label: 'Other' },
+  ];
 
   const categories = useMemo(
     () => [
@@ -36,7 +44,7 @@ const DocumentsScreenPro = () => {
 
   const parseFileType = (type) => (type || '').toLowerCase().includes('pdf') ? 'PDF' : 'Image';
 
-  const handleUploadWeb = () => {
+  const handleUploadWeb = (category) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*,.pdf';
@@ -56,7 +64,7 @@ const DocumentsScreenPro = () => {
 
         addDocument({
           name: file.name,
-          category: 'other',
+          category,
           type: fileType,
           size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
           source: 'manual',
@@ -75,7 +83,7 @@ const DocumentsScreenPro = () => {
     input.click();
   };
 
-  const handleUploadNative = async () => {
+  const handleUploadNative = async (category) => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ['image/*', 'application/pdf'],
@@ -89,7 +97,7 @@ const DocumentsScreenPro = () => {
       const type = parseFileType(file.mimeType);
       addDocument({
         name: file.name,
-        category: 'other',
+        category,
         type,
         size: `${((file.size || 0) / 1024 / 1024).toFixed(2)} MB`,
         source: 'manual',
@@ -103,12 +111,22 @@ const DocumentsScreenPro = () => {
     }
   };
 
-  const handleUploadDocument = async () => {
+  const handleUploadDocument = async (category) => {
     if (Platform.OS === 'web') {
-      handleUploadWeb();
+      handleUploadWeb(category);
       return;
     }
-    await handleUploadNative();
+    await handleUploadNative(category);
+  };
+
+  const openCategoryPicker = () => {
+    setPendingUploadCategory('other');
+    setShowUploadCategoryModal(true);
+  };
+
+  const startUploadAfterCategory = async () => {
+    setShowUploadCategoryModal(false);
+    await handleUploadDocument(pendingUploadCategory);
   };
 
   const handleDownload = (doc) => {
@@ -194,13 +212,56 @@ const DocumentsScreenPro = () => {
           </SafeAreaView>
         )}
       </Modal>
+      <Modal
+        visible={showUploadCategoryModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowUploadCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.categoryModalCard}>
+            <Text style={styles.categoryModalTitle}>Select Document Type</Text>
+            <Text style={styles.categoryModalSubtitle}>Choose category before upload.</Text>
+            <View style={styles.categoryOptions}>
+              {uploadCategories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.key}
+                  style={[
+                    styles.categoryOption,
+                    pendingUploadCategory === cat.key && styles.categoryOptionActive,
+                  ]}
+                  onPress={() => setPendingUploadCategory(cat.key)}
+                  activeOpacity={0.85}
+                >
+                  <Text
+                    style={[
+                      styles.categoryOptionText,
+                      pendingUploadCategory === cat.key && styles.categoryOptionTextActive,
+                    ]}
+                  >
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.categoryActions}>
+              <TouchableOpacity style={styles.categoryCancelButton} onPress={() => setShowUploadCategoryModal(false)}>
+                <Text style={styles.categoryCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.categoryContinueButton} onPress={startUploadAfterCategory}>
+                <Text style={styles.categoryContinueButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Document Vault</Text>
           <Text style={styles.headerSubtitle}>{documents.length} stored files</Text>
         </View>
-        <TouchableOpacity onPress={handleUploadDocument} style={styles.uploadButton} activeOpacity={0.85}>
+        <TouchableOpacity onPress={openCategoryPicker} style={styles.uploadButton} activeOpacity={0.85}>
           <Ionicons name="add" size={24} color={mobileTheme.colors.textOnPrimary} />
         </TouchableOpacity>
       </View>
@@ -226,12 +287,16 @@ const DocumentsScreenPro = () => {
 
       <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
         <View style={styles.listContent}>
-          {filteredDocuments.length === 0 ? (
+          {!isLoaded ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>Loading documents...</Text>
+            </View>
+          ) : filteredDocuments.length === 0 ? (
             <View style={styles.emptyCard}>
               <Ionicons name="folder-open-outline" size={30} color={mobileTheme.colors.textTertiary} />
               <Text style={styles.emptyTitle}>No Documents Yet</Text>
               <Text style={styles.emptyText}>Upload your first file to start your document vault.</Text>
-              <TouchableOpacity style={styles.primaryButton} onPress={handleUploadDocument} activeOpacity={0.85}>
+              <TouchableOpacity style={styles.primaryButton} onPress={openCategoryPicker} activeOpacity={0.85}>
                 <Text style={styles.primaryButtonText}>Upload Document</Text>
               </TouchableOpacity>
             </View>
@@ -478,6 +543,79 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: mobileTheme.spacing.sm,
     padding: mobileTheme.spacing.lg,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(8, 15, 30, 0.45)',
+  },
+  categoryModalCard: {
+    backgroundColor: mobileTheme.colors.surface,
+    borderTopLeftRadius: mobileTheme.radius.xl,
+    borderTopRightRadius: mobileTheme.radius.xl,
+    padding: mobileTheme.spacing.lg,
+  },
+  categoryModalTitle: {
+    color: mobileTheme.colors.textPrimary,
+    fontSize: mobileTheme.typography.h3,
+    fontWeight: mobileTheme.typography.semibold,
+  },
+  categoryModalSubtitle: {
+    marginTop: mobileTheme.spacing.xs,
+    color: mobileTheme.colors.textSecondary,
+    fontSize: mobileTheme.typography.small,
+  },
+  categoryOptions: {
+    marginTop: mobileTheme.spacing.md,
+    gap: mobileTheme.spacing.sm,
+  },
+  categoryOption: {
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    borderRadius: mobileTheme.radius.md,
+    paddingVertical: mobileTheme.spacing.sm,
+    paddingHorizontal: mobileTheme.spacing.md,
+  },
+  categoryOptionActive: {
+    borderColor: mobileTheme.colors.primary,
+    backgroundColor: mobileTheme.colors.primarySoft,
+  },
+  categoryOptionText: {
+    color: mobileTheme.colors.textPrimary,
+    fontWeight: mobileTheme.typography.medium,
+  },
+  categoryOptionTextActive: {
+    color: mobileTheme.colors.primary,
+  },
+  categoryActions: {
+    marginTop: mobileTheme.spacing.lg,
+    flexDirection: 'row',
+    gap: mobileTheme.spacing.sm,
+  },
+  categoryCancelButton: {
+    flex: 1,
+    borderRadius: mobileTheme.radius.md,
+    borderWidth: 1,
+    borderColor: mobileTheme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: mobileTheme.spacing.sm,
+  },
+  categoryCancelButtonText: {
+    color: mobileTheme.colors.textPrimary,
+    fontWeight: mobileTheme.typography.semibold,
+  },
+  categoryContinueButton: {
+    flex: 1,
+    borderRadius: mobileTheme.radius.md,
+    backgroundColor: mobileTheme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: mobileTheme.spacing.sm,
+  },
+  categoryContinueButtonText: {
+    color: mobileTheme.colors.textOnPrimary,
+    fontWeight: mobileTheme.typography.semibold,
   },
   secondaryButton: {
     flex: 1,
