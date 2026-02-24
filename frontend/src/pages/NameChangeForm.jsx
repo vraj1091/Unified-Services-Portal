@@ -18,6 +18,7 @@ const NameChangeForm = () => {
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const [prefillLoaded, setPrefillLoaded] = useState(false);
 
   const categoryData = suppliers[category];
   const supplierList = getSuppliers(category);
@@ -46,10 +47,110 @@ const NameChangeForm = () => {
         ...prev,
         applicant_name: user.full_name || '',
         mobile: user.mobile || '',
-        email: user.email || ''
+        email: user.email || '',
+        address: user.address || prev.address || '',
+        city: user.city || prev.city || '',
+        pincode: user.pincode || prev.pincode || '',
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    const applyNonEmpty = (target, key, value) => {
+      if (!value) return;
+      const asString = String(value).trim();
+      if (!asString) return;
+      if (!target[key] || !String(target[key]).trim()) {
+        target[key] = asString;
+      }
+    };
+
+    const loadAutoFill = async () => {
+      try {
+        const [autoFillRes, docsRes] = await Promise.all([
+          api.get('/users/autofill-data').catch(() => null),
+          api.get('/users/documents').catch(() => null),
+        ]);
+
+        const autoFill = autoFillRes?.data || {};
+        const docs = Array.isArray(docsRes?.data) ? docsRes.data : [];
+        const next = {};
+
+        const profile = autoFill?.user || {};
+        applyNonEmpty(next, 'applicant_name', profile.full_name);
+        applyNonEmpty(next, 'mobile', profile.mobile);
+        applyNonEmpty(next, 'email', profile.email);
+        applyNonEmpty(next, 'address', profile.address);
+        applyNonEmpty(next, 'city', profile.city);
+        applyNonEmpty(next, 'pincode', profile.pincode);
+        applyNonEmpty(next, 'district', profile.city);
+
+        const firstElectricity = autoFill?.electricity_accounts?.[0];
+        const firstGas = autoFill?.gas_accounts?.[0];
+        const firstWater = autoFill?.water_accounts?.[0];
+        const firstProperty = autoFill?.property_accounts?.[0];
+
+        if (category === 'electricity' && firstElectricity) {
+          applyNonEmpty(next, 'service_number', firstElectricity.service_number);
+          applyNonEmpty(next, 't_no', firstElectricity.t_no);
+          applyNonEmpty(next, 'applicant_name', firstElectricity.consumer_name);
+          applyNonEmpty(next, 'address', firstElectricity.connection_address);
+        }
+
+        if (category === 'gas' && firstGas) {
+          applyNonEmpty(next, 'consumer_number', firstGas.consumer_number);
+          applyNonEmpty(next, 'bp_number', firstGas.bp_number);
+          applyNonEmpty(next, 'applicant_name', firstGas.consumer_name);
+          applyNonEmpty(next, 'address', firstGas.connection_address);
+        }
+
+        if (category === 'water' && firstWater) {
+          applyNonEmpty(next, 'connection_number', firstWater.connection_id);
+          applyNonEmpty(next, 'applicant_name', firstWater.consumer_name);
+          applyNonEmpty(next, 'address', firstWater.connection_address);
+          applyNonEmpty(next, 'zone', firstWater.zone);
+          applyNonEmpty(next, 'ward', firstWater.ward);
+        }
+
+        if (category === 'property' && firstProperty) {
+          applyNonEmpty(next, 'survey_number', firstProperty.survey_number);
+          applyNonEmpty(next, 'property_id', firstProperty.property_id);
+          applyNonEmpty(next, 'applicant_name', firstProperty.owner_name);
+          applyNonEmpty(next, 'address', firstProperty.property_address);
+          applyNonEmpty(next, 'city', firstProperty.city);
+          applyNonEmpty(next, 'taluka', firstProperty.taluka);
+          applyNonEmpty(next, 'district', firstProperty.district);
+        }
+
+        docs.forEach((doc) => {
+          const extracted = doc?.extracted_data || {};
+          applyNonEmpty(next, 'applicant_name', extracted.full_name || extracted.name);
+          applyNonEmpty(next, 'new_name', extracted.new_name);
+          applyNonEmpty(next, 'address', extracted.address);
+          applyNonEmpty(next, 'city', extracted.city);
+          applyNonEmpty(next, 'district', extracted.district);
+          applyNonEmpty(next, 'taluka', extracted.taluka);
+          applyNonEmpty(next, 'ward', extracted.ward);
+          applyNonEmpty(next, 'zone', extracted.zone);
+          applyNonEmpty(next, 'pincode', extracted.pincode);
+          applyNonEmpty(next, 'document_number', extracted.document_number);
+          applyNonEmpty(next, 'service_number', extracted.service_number || extracted.consumer_number);
+          applyNonEmpty(next, 'consumer_number', extracted.consumer_number);
+          applyNonEmpty(next, 'bp_number', extracted.bp_number);
+          applyNonEmpty(next, 'survey_number', extracted.survey_number);
+          applyNonEmpty(next, 'property_id', extracted.property_id);
+          applyNonEmpty(next, 'mobile', extracted.mobile);
+          applyNonEmpty(next, 'email', extracted.email);
+        });
+
+        setFormData((prev) => ({ ...next, ...prev }));
+      } finally {
+        setPrefillLoaded(true);
+      }
+    };
+
+    loadAutoFill();
+  }, [category]);
 
   const handleSupplierSelect = (supplier) => {
     setSelectedSupplier(supplier);
@@ -448,6 +549,11 @@ const NameChangeForm = () => {
                 <p className="text-gray-500 text-center mb-6">
                   Enter your information for name change application
                 </p>
+                {!prefillLoaded && (
+                  <div className="bg-blue-50 text-blue-700 p-3 rounded-lg mb-4 text-center text-sm">
+                    Loading auto-fill data from your profile and documents...
+                  </div>
+                )}
 
                 {message && (
                   <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-center">

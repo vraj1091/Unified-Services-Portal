@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,10 +52,10 @@ const LoginScreenPro = ({ navigation }) => {
           <View style={styles.contentWrap}>
             <LinearGradient colors={['#214CC8', '#173A9F']} style={styles.hero}>
               <View style={styles.logoWrap}>
-                <Ionicons name="shield-checkmark" size={28} color={mobileTheme.colors.textOnPrimary} />
+                <Image source={require('../../../assets/icon-192.png')} style={styles.logoImage} resizeMode="contain" />
               </View>
-              <Text style={styles.heroTitle}>Gujarat Services Portal</Text>
-              <Text style={styles.heroSubtitle}>Secure digital access to state government services</Text>
+              <Text style={styles.heroTitle}>Unified Portal</Text>
+              <Text style={styles.heroSubtitle}>Secure digital access to government services</Text>
             </LinearGradient>
 
             <View style={styles.card}>
@@ -110,7 +111,7 @@ const LoginScreenPro = ({ navigation }) => {
 
             <InstallAppBanner />
 
-            <Text style={styles.bottomText}>Government of Gujarat | Encrypted session</Text>
+            <Text style={styles.bottomText}>Unified Portal | Encrypted session</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -142,10 +143,14 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: mobileTheme.spacing.lg,
+  },
+  logoImage: {
+    width: 30,
+    height: 30,
   },
   heroTitle: {
     color: mobileTheme.colors.textOnPrimary,

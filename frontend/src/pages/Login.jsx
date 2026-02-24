@@ -43,8 +43,8 @@ const Login = () => {
               <img src="/ashoka-emblem.webp" alt="Ashoka Emblem" className="w-8 h-8 object-contain" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 tracking-tight">Unified Services <span className="text-primary-600">Portal</span></h1>
-              <p className="text-xs text-slate-500 font-bold tracking-widest uppercase">Government of India</p>
+              <h1 className="text-xl font-bold text-slate-800 tracking-tight">Unified <span className="text-primary-600">Portal</span></h1>
+              <p className="text-xs text-slate-500 font-bold tracking-widest uppercase">Digital Public Services</p>
             </div>
           </div>
 

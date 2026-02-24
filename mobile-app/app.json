@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Gujarat Unified Services Portal",
+    "name": "Unified Portal",
     "slug": "gujarat-unified-services-portal-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,8 +20,8 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "name": "Gujarat Services Portal",
-      "shortName": "GujaratPortal",
+      "name": "Unified Portal",
+      "shortName": "UnifiedPortal",
       "backgroundColor": "#F1F5F9",
       "themeColor": "#214CC8",
       "display": "standalone"
