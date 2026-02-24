@@ -5,8 +5,10 @@ import { Upload, FileText, Check, X, ArrowLeft, Home, Trash2, Edit, Download } f
 
 const Documents = () => {
   const navigate = useNavigate();
+  const DOCS_CACHE_KEY = 'documents_cache_v1';
   const [documents, setDocuments] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('aadhaar');
 
   const docTypes = [
@@ -25,10 +27,27 @@ const Documents = () => {
 
   const fetchDocuments = async () => {
     try {
+      setLoading(true);
       const response = await api.get('/users/documents');
-      setDocuments(response.data);
+      const safeDocuments = Array.isArray(response.data) ? response.data : [];
+      setDocuments(safeDocuments);
+      localStorage.setItem(DOCS_CACHE_KEY, JSON.stringify(safeDocuments));
     } catch (error) {
-      console.error('Failed to fetch documents');
+      if (import.meta.env.DEV) {
+        console.error('Failed to fetch documents', error?.message || error);
+      }
+      const cached = localStorage.getItem(DOCS_CACHE_KEY);
+      if (cached) {
+        try {
+          setDocuments(JSON.parse(cached));
+        } catch {
+          setDocuments([]);
+        }
+      } else {
+        setDocuments([]);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -153,7 +172,9 @@ const Documents = () => {
       {/* Documents List */}
       <div className="bg-white rounded-xl shadow-md p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Uploaded Documents</h3>
-        {documents.length === 0 ? (
+        {loading ? (
+          <p className="text-gray-500">Loading documents...</p>
+        ) : documents.length === 0 ? (
           <p className="text-gray-500">No documents uploaded yet</p>
         ) : (
           <div className="space-y-3">

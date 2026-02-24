@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await api.get('/auth/me', { timeout: 8000, disableBaseRetry: true });
+      const response = await api.get('/auth/me', { timeout: 20000 });
       setUser(response.data);
     } catch (error) {
       // Silently fail - user is not authenticated
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       // Warm up Render free backend before auth request
-      api.get('/health', { timeout: 4000, disableBaseRetry: true }).catch(() => null);
+      api.get('/health', { timeout: 12000 }).catch(() => null);
 
       const formData = new URLSearchParams();
       formData.append('username', email);
@@ -50,13 +50,12 @@ export const AuthProvider = ({ children }) => {
       
       const response = await api.post('/auth/login', formData, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        timeout: 10000,
-        disableBaseRetry: true,
+        timeout: 25000,
       });
       
       localStorage.setItem('token', response.data.access_token);
       try {
-        const meResponse = await api.get('/auth/me', { timeout: 6000, disableBaseRetry: true });
+        const meResponse = await api.get('/auth/me', { timeout: 15000 });
         setUser(meResponse.data);
         localStorage.setItem('user', JSON.stringify(meResponse.data));
       } catch (meError) {

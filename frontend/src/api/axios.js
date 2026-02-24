@@ -25,6 +25,13 @@ const getApiBaseUrls = () => {
     return [...new Set(envApiUrls)];
   }
 
+  // Render preview/static aliases: keep frontend/backend suffix aligned.
+  const renderMatch = hostname.match(/^gujarat-portal-(frontend|mobile)(-[a-z0-9]+)?\.onrender\.com$/i);
+  if (renderMatch) {
+    const suffix = renderMatch[2] || '';
+    envApiUrls.push(`https://gujarat-portal-backend${suffix}.onrender.com/api`);
+  }
+
   // Known backend host fallback for Render.
   envApiUrls.push('https://gujarat-portal-backend.onrender.com/api');
 
@@ -35,7 +42,7 @@ const apiBaseUrls = getApiBaseUrls();
 
 const api = axios.create({
   baseURL: apiBaseUrls[0],
-  timeout: 15000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },

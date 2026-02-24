@@ -5,6 +5,7 @@ import { FileText, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight, Filter,
 
 const Applications = () => {
   const navigate = useNavigate();
+  const APPS_CACHE_KEY = 'applications_cache_v1';
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,10 +17,23 @@ const Applications = () => {
     try {
       setLoading(true);
       const response = await api.get('/applications/');
-      setApplications(Array.isArray(response.data) ? response.data : []);
+      const safeApplications = Array.isArray(response.data) ? response.data : [];
+      setApplications(safeApplications);
+      localStorage.setItem(APPS_CACHE_KEY, JSON.stringify(safeApplications));
     } catch (error) {
-      console.error('Failed to fetch applications');
-      setApplications([]);
+      if (import.meta.env.DEV) {
+        console.error('Failed to fetch applications', error?.message || error);
+      }
+      const cached = localStorage.getItem(APPS_CACHE_KEY);
+      if (cached) {
+        try {
+          setApplications(JSON.parse(cached));
+        } catch {
+          setApplications([]);
+        }
+      } else {
+        setApplications([]);
+      }
     } finally {
       setLoading(false);
     }

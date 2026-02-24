@@ -29,6 +29,7 @@ const maskEmail = (email) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const STATS_CACHE_KEY = 'dashboard_stats_cache_v1';
   const [stats, setStats] = useState({
     applications: 0,
     pending: 0,
@@ -52,13 +53,36 @@ const Dashboard = () => {
         pending: pending,
         completed: completed
       });
+      localStorage.setItem(
+        STATS_CACHE_KEY,
+        JSON.stringify({
+          applications: applications.length,
+          pending,
+          completed
+        })
+      );
     } catch (error) {
-      console.error('Failed to fetch stats');
-      setStats({
-        applications: 0,
-        pending: 0,
-        completed: 0
-      });
+      if (import.meta.env.DEV) {
+        console.error('Failed to fetch stats', error?.message || error);
+      }
+      const cached = localStorage.getItem(STATS_CACHE_KEY);
+      if (cached) {
+        try {
+          setStats(JSON.parse(cached));
+        } catch {
+          setStats({
+            applications: 0,
+            pending: 0,
+            completed: 0
+          });
+        }
+      } else {
+        setStats({
+          applications: 0,
+          pending: 0,
+          completed: 0
+        });
+      }
     } finally {
       setLoading(false);
     }
