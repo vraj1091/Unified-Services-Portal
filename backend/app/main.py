@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request, Response
 import json
 from app.database import engine, Base
 from app.routers import auth, users, services, applications, services_api, whatsapp, documents, services_data, portal_redirect, proxy, grants, admin, automation
@@ -49,6 +50,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Hard CORS fallback for Render/browser preflight edge cases.
+# This guarantees Access-Control-* headers even when upstream config drifts.
+@app.middleware("http")
+async def force_cors_headers(request: Request, call_next):
+    cors_headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "*",
+    }
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204, headers=cors_headers)
+
+    try:
+        response = await call_next(request)
+    except Exception:
+        response = Response(status_code=500)
+
+    for key, value in cors_headers.items():
+        response.headers[key] = value
+    return response
 
 # Include routers
 app.include_router(auth.router)
